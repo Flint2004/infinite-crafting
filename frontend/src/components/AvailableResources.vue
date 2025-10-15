@@ -40,18 +40,22 @@ const [collectDrop, drop] = useDrop(() => ({
 <template>
   <div 
     :ref="drop"
-    class="flex gap-3 flex-wrap pt-3 select-none min-h-[100px]"
+    class="flex-grow flex flex-col p-3"
   >
-    <input v-model="searchTerm" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 select-text" placeholder="搜索元素...">
-    <Resource 
-      v-for="resource in filteredResources" 
-      :key="resource.id" 
-      :id="resource.id"
-      :name_cn="resource.name_cn"
-      :name_en="resource.name_en"
-      :emoji="resource.emoji"
-      :discoverer_name="resource.discoverer_name"
-    />
+    <input v-model="searchTerm" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 select-text mb-3" placeholder="搜索元素...">
+    <div class="flex-grow overflow-y-auto">
+      <div class="flex gap-3 flex-wrap select-none">
+        <Resource 
+          v-for="resource in filteredResources" 
+          :key="resource.id" 
+          :id="resource.id"
+          :name_cn="resource.name_cn"
+          :name_en="resource.name_en"
+          :emoji="resource.emoji"
+          :discoverer_name="resource.discoverer_name"
+        />
+      </div>
+    </div>
   </div>
 </template>
 

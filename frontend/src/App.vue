@@ -144,8 +144,8 @@ async function copyToken() {
       </nav>
     </div>
   </header>
-  <div class="bg-gray-50 h-screen overflow-hidden px-4" :class="userStore.isLoggedIn() ? 'pt-24' : 'pt-4'">
-    <div class="h-full">
+  <div class="bg-gray-50 h-screen flex flex-col" :class="userStore.isLoggedIn() ? 'pt-24' : 'pt-4'">
+    <div class="flex-grow min-h-0">
       <RouterView/>
     </div>
   </div>

@@ -4,7 +4,7 @@ import { ItemTypes } from './ItemTypes'
 import { toRefs } from '@vueuse/core'
 import ItemCard from "@/components/ItemCard.vue";
 import { useBoxesStore } from '@/stores/useBoxesStore'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import request from '@/utils/request'
 
 const props = defineProps<{
@@ -36,14 +36,15 @@ const { isDragging } = toRefs(collect)
 const showDetails = ref(false)
 const elementDetails = ref<any>(null)
 
-// 长按检测（触摸和鼠标通用）
+// 长按检测
 let longPressTimer: any = null
-let touchStartX = 0
-let touchStartY = 0
-let mouseStartX = 0
-let mouseStartY = 0
-let hasMoved = false
-let isDraggingStarted = false // 标记是否已经开始拖拽，一旦开始就不再触发长按
+watch(isDragging, (newValue) => {
+  // If dragging starts, clear the long-press timer
+  if (newValue && longPressTimer) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
+})
 
 // 单击事件：将元素放置到工作区中心区域的随机位置
 // click 事件只在真正的单击时触发，拖动不会触发
@@ -98,99 +99,39 @@ function handleContextMenu(event: MouseEvent) {
 function handleMouseDown(event: MouseEvent) {
   // 只响应左键
   if (event.button !== 0) return
-  
-  mouseStartX = event.clientX
-  mouseStartY = event.clientY
-  hasMoved = false
-  isDraggingStarted = false // 重置拖拽标志
-  
-  // 1秒后如果没有移动，显示详情
+
   longPressTimer = setTimeout(() => {
-    if (!hasMoved && !isDraggingStarted) {
+    // A safeguard in case the timer fires simultaneously with the drag start
+    if (!isDragging.value) {
       showElementDetails()
     }
   }, 1000)
 }
 
-// 鼠标移动 - 检测是否移动
-function handleMouseMove(event: MouseEvent) {
-  // 如果已经开始拖拽，不再处理
-  if (isDraggingStarted) return
-  // 如果没有计时器，说明还没按下或已经触发，不处理
-  if (!longPressTimer && !hasMoved) return
-  
-  const deltaX = Math.abs(event.clientX - mouseStartX)
-  const deltaY = Math.abs(event.clientY - mouseStartY)
-  
-  // 移动超过10px就认为是拖动
-  if (deltaX > 10 || deltaY > 10) {
-    hasMoved = true
-    isDraggingStarted = true // 标记为已经开始拖拽
-    if (longPressTimer) {
-      clearTimeout(longPressTimer)
-      longPressTimer = null
-    }
-  }
-}
-
-// 鼠标释放 - 清除计时器并重置状态
+// 鼠标释放 - 清除计时器
 function handleMouseUp() {
   if (longPressTimer) {
     clearTimeout(longPressTimer)
     longPressTimer = null
   }
-  // 重置所有状态
-  isDraggingStarted = false
-  hasMoved = false
 }
 
 // 触摸开始 - 开始长按计时
-function handleTouchStart(event: TouchEvent) {
-  const touch = event.touches[0]
-  touchStartX = touch.clientX
-  touchStartY = touch.clientY
-  hasMoved = false
-  isDraggingStarted = false // 重置拖拽标志
-  
-  // 1秒后如果没有移动，显示详情
+function handleTouchStart() {
   longPressTimer = setTimeout(() => {
-    if (!hasMoved && !isDraggingStarted) {
+    // A safeguard in case the timer fires simultaneously with the drag start
+    if (!isDragging.value) {
       showElementDetails()
     }
   }, 1000)
 }
 
-// 触摸移动 - 检测是否移动
-function handleTouchMove(event: TouchEvent) {
-  // 如果已经开始拖拽，不再处理
-  if (isDraggingStarted) return
-  // 如果没有计时器，说明还没按下或已经触发，不处理
-  if (!longPressTimer && !hasMoved) return
-  
-  const touch = event.touches[0]
-  const deltaX = Math.abs(touch.clientX - touchStartX)
-  const deltaY = Math.abs(touch.clientY - touchStartY)
-  
-  // 移动超过10px就认为是拖动
-  if (deltaX > 10 || deltaY > 10) {
-    hasMoved = true
-    isDraggingStarted = true // 标记为已经开始拖拽
-    if (longPressTimer) {
-      clearTimeout(longPressTimer)
-      longPressTimer = null
-    }
-  }
-}
-
-// 触摸结束 - 清除计时器并重置状态
+// 触摸结束 - 清除计时器
 function handleTouchEnd() {
   if (longPressTimer) {
     clearTimeout(longPressTimer)
     longPressTimer = null
   }
-  // 重置所有状态
-  isDraggingStarted = false
-  hasMoved = false
 }
 </script>
 
@@ -204,11 +145,9 @@ function handleTouchEnd() {
         @click="handleClick"
         @contextmenu="handleContextMenu"
         @mousedown="handleMouseDown"
-        @mousemove="handleMouseMove"
         @mouseup="handleMouseUp"
         @mouseleave="handleMouseUp"
         @touchstart.passive="handleTouchStart"
-        @touchmove.passive="handleTouchMove"
         @touchend.passive="handleTouchEnd"
         @touchcancel.passive="handleTouchEnd"
         :style="{ 

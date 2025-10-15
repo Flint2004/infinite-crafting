@@ -102,6 +102,7 @@ function showErrorDialog(message: string) {
 
 const [, drop] = useDrop(() => ({
   accept: ItemTypes.BOX,
+  canDrop: () => props.size === 'large', // Only large boxes in the craft area can be drop targets
   async drop(item: DragItem, monitor) {
     // 标记正在进行拖动操作，防止触发双击
     isDragging = true
