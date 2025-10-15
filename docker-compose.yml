@@ -19,6 +19,9 @@ services:
       - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
       - PORT=3000
       - DB_PATH=/app/data/cache.db
+      - PRESETS_PATH=${PRESETS_PATH:-/app/data/presets.json}
+      - PROMPT_RULES_PATH=${PROMPT_RULES_PATH:-/app/data/prompt_rules.txt}
+      - ADMIN_KEY=${ADMIN_KEY}
     volumes:
       - ./server/data:/app/data
       - ${LOCAL_MODEL_DIR:-./server/models}:/app/models
