@@ -1,7 +1,7 @@
 {
   "name": "opencraft",
-  "version": "2.0.0",
-  "description": "An open source clone of infinite craft - Chinese Version with DeepSeek-V3",
+  "version": "2.1.0",
+  "description": "An open source clone of infinite craft - Chinese Version with Dual AI Mode",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -18,5 +18,8 @@
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "url": "^0.11.3"
+  },
+  "optionalDependencies": {
+    "node-llama-cpp": "^2.8.8"
   }
 }

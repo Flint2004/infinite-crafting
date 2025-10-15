@@ -1,22 +1,37 @@
 services:
   backend:
-    build: ./server
+    build:
+      context: ./server
+      dockerfile: ${DOCKERFILE:-Dockerfile}
     container_name: opencraft-backend
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
+      - AI_MODE=${AI_MODE:-api}
       - SILICONFLOW_API_KEY=${SILICONFLOW_API_KEY}
       - SILICONFLOW_API_URL=${SILICONFLOW_API_URL:-https://api.siliconflow.cn/v1/chat/completions}
       - AI_MODEL=${AI_MODEL:-deepseek-ai/DeepSeek-V3.2-Exp}
       - AI_TEMPERATURE=${AI_TEMPERATURE:-0.7}
       - AI_MAX_TOKENS=${AI_MAX_TOKENS:-200}
+      - CRAFT_ORDER_MATTERS=${CRAFT_ORDER_MATTERS:-false}
+      - LOCAL_MODEL_PATH=${LOCAL_MODEL_PATH:-/app/models/model.gguf}
+      - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
       - PORT=3000
       - DB_PATH=/app/data/cache.db
     volumes:
       - ./server/data:/app/data
+      - ${LOCAL_MODEL_DIR:-./server/models}:/app/models
     networks:
       - opencraft-network
+    # GPU支持配置（仅在使用本地模型时需要，取消注释以下配置）
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${NETWORK_NAME:-reverse-proxy-docker-traefik_routing}"

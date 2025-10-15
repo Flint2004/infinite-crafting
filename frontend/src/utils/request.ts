@@ -13,11 +13,35 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   (config) => {
-    const userStore = useUserStore()
-    const token = userStore.getToken()
+    // 尝试从 store 获取 token
+    let token = ''
+    
+    try {
+      const userStore = useUserStore()
+      token = userStore.getToken()
+    } catch (error) {
+      // 如果 store 还未初始化，直接从 localStorage 读取
+      console.warn('Store not ready, reading from localStorage')
+    }
+    
+    // 如果 store 中没有，直接从 localStorage 读取作为后备
+    if (!token) {
+      try {
+        const userData = localStorage.getItem('opencraft/user')
+        if (userData) {
+          const user = JSON.parse(userData)
+          token = user?.token || ''
+        }
+      } catch (error) {
+        console.error('Failed to read token from localStorage:', error)
+      }
+    }
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+      console.log('✅ Request with token:', config.url, token.substring(0, 10) + '...')
+    } else {
+      console.warn('⚠️ Request without token:', config.url)
     }
     
     return config

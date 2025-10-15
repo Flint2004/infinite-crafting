@@ -1,3 +1,38 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 防止移动端长按出现浏览器菜单 */
+@layer base {
+  /* 禁用iOS Safari的长按菜单 */
+  * {
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* 允许输入框选择文本 */
+  input, textarea {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  
+  /* 防止图片和表情被长按保存 */
+  img, svg {
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* 拖拽元素相关样式 */
+@layer components {
+  .draggable-element {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}

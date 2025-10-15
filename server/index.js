@@ -11,22 +11,50 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let db;
+let llamaModel = null;
+let llamaContext = null;
 
-// 硅基流动API配置
+// AI模式配置
+const AI_MODE = process.env.AI_MODE || 'api'; // 'local' 或 'api'
+
+// API模式配置
 const SILICONFLOW_API_KEY = process.env.SILICONFLOW_API_KEY || '';
 const SILICONFLOW_API_URL = process.env.SILICONFLOW_API_URL || 'https://api.siliconflow.cn/v1/chat/completions';
 const MODEL_NAME = process.env.AI_MODEL || 'deepseek-ai/DeepSeek-V3.2-Exp';
+
+// 本地模型配置
+const LOCAL_MODEL_PATH = process.env.LOCAL_MODEL_PATH || path.join(__dirname, "models", "mistral-7b-instruct-v0.1.Q8_0.gguf");
+const HF_ENDPOINT = process.env.HF_ENDPOINT || 'https://hf-mirror.com';
+
+// 通用AI配置
 const AI_TEMPERATURE = parseFloat(process.env.AI_TEMPERATURE || '0.7');
 const AI_MAX_TOKENS = parseInt(process.env.AI_MAX_TOKENS || '200');
+
+// 合成配置
+// CRAFT_ORDER_MATTERS=true 表示顺序重要，A+B和B+A会产生不同结果
+// 未设置或设为其他值 (如 'false') 表示顺序不重要，A+B和B+A统一按字典序排列（默认）
+const CRAFT_ORDER_MATTERS = process.env.CRAFT_ORDER_MATTERS === 'false';
+
+// 设置HuggingFace镜像
+if (HF_ENDPOINT && AI_MODE === 'local') {
+    process.env.HF_ENDPOINT = HF_ENDPOINT;
+}
 
 // 生成唯一ID
 function generateUniqueId() {
     return crypto.randomBytes(16).toString('hex');
 }
 
-// 生成token
+// 生成token（6位字符）
 function generateToken() {
-    return crypto.randomBytes(32).toString('hex');
+    // 生成6位大写字母和数字的token
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let token = '';
+    for (let i = 0; i < 6; i++) {
+        const randomByte = crypto.randomBytes(1)[0];
+        token += chars[randomByte % chars.length];
+    }
+    return token;
 }
 
 async function initializeDatabase() {
@@ -81,6 +109,24 @@ async function initializeDatabase() {
         )
     `);
     
+    // 首次发现配方记录表
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS first_discoveries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            element_id TEXT NOT NULL,
+            first_element_id TEXT NOT NULL,
+            second_element_id TEXT NOT NULL,
+            discoverer_id INTEGER NOT NULL,
+            discoverer_name TEXT NOT NULL,
+            discovered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (element_id) REFERENCES elements(id),
+            FOREIGN KEY (first_element_id) REFERENCES elements(id),
+            FOREIGN KEY (second_element_id) REFERENCES elements(id),
+            FOREIGN KEY (discoverer_id) REFERENCES users(id),
+            UNIQUE(element_id)
+        )
+    `);
+    
     // 初始化基础五行元素
     const baseElements = [
         { id: 'base_metal', name_cn: '金', name_en: 'Metal', emoji: '⚙️' },
@@ -101,11 +147,50 @@ async function initializeDatabase() {
     }
 }
 
+// 初始化本地模型
+async function initializeLocalModel() {
+    if (AI_MODE !== 'local') {
+        return;
+    }
+    
+    try {
+        console.log('🔄 正在加载本地模型...');
+        console.log(`   模型路径: ${LOCAL_MODEL_PATH}`);
+        console.log(`   HF镜像: ${HF_ENDPOINT}`);
+        
+        // 动态导入node-llama-cpp（只在本地模式才需要）
+        const { LlamaModel, LlamaContext } = await import('node-llama-cpp');
+        
+        llamaModel = new LlamaModel({
+            modelPath: LOCAL_MODEL_PATH,
+        });
+        
+        llamaContext = new LlamaContext({
+            model: llamaModel,
+            seed: 0
+        });
+        
+        console.log('✅ 本地模型加载成功');
+    } catch (error) {
+        console.error('❌ 本地模型加载失败:', error.message);
+        console.error('   请确保：');
+        console.error('   1. 已安装 node-llama-cpp: npm install node-llama-cpp');
+        console.error('   2. 模型文件存在于:', LOCAL_MODEL_PATH);
+        console.error('   3. 或切换到API模式: AI_MODE=api');
+        process.exit(1);
+    }
+}
+
 initializeDatabase();
+
+// 如果是本地模式，初始化模型
+if (AI_MODE === 'local') {
+    await initializeLocalModel();
+}
 
 const fastify = Fastify({
     logger: true,
-    requestTimeout: 60 * 1000
+    requestTimeout: AI_MODE === 'local' ? 120 * 1000 : 60 * 1000 // 本地模型需要更长时间
 })
 await fastify.register(cors, {
     origin: true,
@@ -186,6 +271,17 @@ async function craftNewElement(firstElement, secondElement, user) {
                 [elementId, result.name_cn, result.name_en, result.emoji, user.id, user.username]
             );
             newElement = await db.get('SELECT * FROM elements WHERE id = ?', [elementId]);
+            
+            // 记录首次发现配方
+            try {
+                await db.run(
+                    'INSERT INTO first_discoveries (element_id, first_element_id, second_element_id, discoverer_id, discoverer_name) VALUES (?, ?, ?, ?, ?)',
+                    [elementId, firstElement.id, secondElement.id, user.id, user.username]
+                );
+            } catch (err) {
+                // 忽略重复记录错误
+                console.log('首次发现配方已存在');
+            }
         }
         
         // 保存合成缓存
@@ -197,23 +293,110 @@ async function craftNewElement(firstElement, secondElement, user) {
     return null;
 }
 
-// 调用硅基流动API生成新元素
+// 生成新元素（支持本地模型和API两种模式）
 async function generateElement(firstElement, secondElement) {
+    if (AI_MODE === 'local') {
+        return await generateElementLocal(firstElement, secondElement);
+    } else {
+        return await generateElementAPI(firstElement, secondElement);
+    }
+}
+
+// 使用本地模型生成元素
+async function generateElementLocal(firstElement, secondElement) {
+    if (!llamaModel || !llamaContext) {
+        throw new Error('本地模型未初始化');
+    }
+    
+    const { LlamaChatSession, LlamaJsonSchemaGrammar } = await import('node-llama-cpp');
+    const session = new LlamaChatSession({context: llamaContext});
+    
+    const grammar = new LlamaJsonSchemaGrammar({
+        "type": "object",
+        "properties": {
+            "name_cn": {"type": "string"},
+            "name_en": {"type": "string"}
+        }
+    });
+    
+    const systemPrompt = 
+        '你是一个帮助人们通过组合两个元素来创造新事物的助手。' +
+        '规则：' +
+        '1. 答案必须是一个名词。' +
+        '2. 答案必须与两个元素都相关，可以是组合产物、相互作用的结果、或者包含关系。' +
+        '3. 如果一个元素是另一个元素的组成部分或更小的单位，可以返回更大的那个元素（例如：木+森林=森林，水滴+海洋=海洋）。' +
+        '4. 如果两个元素组合没有明显的新事物，可以返回其中一个元素作为结果。' +
+        '5. 尽量避免在答案中同时包含两个原始元素的名称。' +
+        '请用中文回答名词（name_cn字段），并用英文提供翻译（name_en字段）。';
+
+    const answerPrompt = '请告诉我如果组合"' + firstElement.name_cn + '"（' + firstElement.name_en + '）和"' + secondElement.name_cn + '"（' + secondElement.name_en + '）会产生什么？';
+
+    const prompt = '<s>[INST] ' + systemPrompt + answerPrompt + '[/INST]</s>\n';
+
+    const result = await session.prompt(prompt, {
+        grammar,
+        maxTokens: AI_MAX_TOKENS
+    });
+
+    const parsed = JSON.parse(result);
+    
+    // 验证结果
+    if (!parsed.name_cn || !parsed.name_en) {
+        return { name_cn: null, name_en: null, emoji: '' };
+    }
+
+    // 生成emoji（必须为一个）
+    const emojiGrammar = new LlamaJsonSchemaGrammar({
+        "type": "object",
+        "properties": {
+            "emoji": {"type": "string"}
+        }
+    });
+    
+    const emojiPrompt = '<s>[INST] 请为"' + parsed.name_cn + '"这个词选择一个最合适的emoji表情符号。要求：必须只返回一个emoji字符，不要返回多个。[/INST]</s>\n';
+    
+    const emojiResult = await session.prompt(emojiPrompt, {
+        grammar: emojiGrammar,
+        maxTokens: 50
+    });
+    
+    const emojiParsed = JSON.parse(emojiResult);
+    
+    // 确保只有一个emoji
+    let emoji = emojiParsed.emoji || '⭐';
+    // 只取第一个emoji字符
+    const emojiMatch = emoji.match(/\p{Emoji}/u);
+    if (emojiMatch) {
+        emoji = emojiMatch[0];
+    }
+
+    return {
+        name_cn: parsed.name_cn,
+        name_en: parsed.name_en,
+        emoji: emoji
+    };
+}
+
+// 使用API生成元素
+async function generateElementAPI(firstElement, secondElement) {
     if (!SILICONFLOW_API_KEY) {
         throw new Error('SILICONFLOW_API_KEY 环境变量未设置');
     }
 
     const systemPrompt = 
         '你是一个帮助人们通过组合两个元素来创造新事物的助手。' +
-        '最重要的规则是：你的答案中绝对不能包含"' + firstElement.name_cn + '"和"' + secondElement.name_cn + '"这两个词，也不能包含"' + firstElement.name_en + '"和"' + secondElement.name_en + '"。' +
-        '答案必须是一个名词。' +
-        '两个元素的顺序不重要，它们同等重要。' +
-        '答案必须与两个元素都相关，可以是两个元素的组合产物，或者是它们相互作用的结果。' +
-        '答案可以是：物体、材料、人物、公司、动物、职业、食物、地点、物品、情感、事件、概念、自然现象、身体部位、交通工具、运动、服装、家具、科技、建筑、乐器、饮料、植物、学科等任何名词。' +
-        '请严格按照JSON格式回答，包含name_cn（中文名）、name_en（英文翻译）和emoji（一个合适的表情符号）三个字段。' +
+        '规则：' +
+        '1. 答案必须是一个名词，可以是：物体、材料、人物、公司、动物、职业、食物、地点、物品、情感、事件、概念、自然现象、身体部位、交通工具、运动、服装、家具、科技、建筑、乐器、饮料、植物、学科等。' +
+        '2. 答案必须与两个元素都相关，可以是组合产物、相互作用的结果、或者包含关系。' +
+        '3. 如果一个元素是另一个元素的组成部分或更小的单位，可以返回更大的那个元素（例如：木+森林=森林，水滴+海洋=海洋，树叶+树=树）。' +
+        '4. 如果两个元素组合没有明显的新事物，可以返回其中一个元素作为结果。' +
+        '5. 两个元素的顺序不重要，它们同等重要。' +
+        '6. emoji字段必须只包含一个emoji字符，不要返回多个emoji。' +
+        '7. 尽量避免在答案中同时包含两个原始元素的名称。' +
+        '请严格按照JSON格式回答，包含name_cn（中文名）、name_en（英文翻译）和emoji（一个emoji字符）三个字段。' +
         '示例格式：{"name_cn": "蒸汽", "name_en": "Steam", "emoji": "💨"}';
 
-    const userPrompt = '请告诉我如果组合"' + firstElement.name_cn + '"（' + firstElement.name_en + '）和"' + secondElement.name_cn + '"（' + secondElement.name_en + '）会产生什么？答案必须与两个元素都相关，且不能包含原词。直接返回JSON格式的答案。';
+    const userPrompt = '请告诉我如果组合"' + firstElement.name_cn + '"（' + firstElement.name_en + '）和"' + secondElement.name_cn + '"（' + secondElement.name_en + '）会产生什么？直接返回JSON格式的答案，emoji必须只有一个字符。';
 
     try {
         const response = await axios.post(
@@ -251,19 +434,18 @@ async function generateElement(firstElement, secondElement) {
             return { name_cn: null, name_en: null, emoji: '' };
         }
         
-        // 检查是否包含原词
-        if (parsed.name_cn.includes(firstElement.name_cn) || 
-            parsed.name_cn.includes(secondElement.name_cn) ||
-            parsed.name_en.toLowerCase().includes(firstElement.name_en.toLowerCase()) ||
-            parsed.name_en.toLowerCase().includes(secondElement.name_en.toLowerCase())) {
-            console.error('AI返回包含原词:', parsed);
-            return { name_cn: null, name_en: null, emoji: '' };
+        // 确保只有一个emoji
+        let emoji = parsed.emoji || '⭐';
+        // 只取第一个emoji字符
+        const emojiMatch = emoji.match(/\p{Emoji}/u);
+        if (emojiMatch) {
+            emoji = emojiMatch[0];
         }
 
         return {
             name_cn: parsed.name_cn,
             name_en: parsed.name_en,
-            emoji: parsed.emoji || '⭐'
+            emoji: emoji
         };
     } catch (error) {
         console.error('调用硅基流动API失败:', error.response?.data || error.message);
@@ -346,6 +528,41 @@ fastify.route({
     }
 });
 
+// 获取元素详情（包括首次发现配方）
+fastify.route({
+    method: 'GET',
+    url: '/elements/:id/details',
+    handler: async (request, reply) => {
+        const { id } = request.params;
+        
+        const element = await db.get('SELECT * FROM elements WHERE id = ?', [id]);
+        if (!element) {
+            return reply.code(404).send({ error: '元素不存在' });
+        }
+        
+        // 获取首次发现配方
+        const discovery = await db.get(`
+            SELECT 
+                fd.*,
+                e1.name_cn as first_element_cn,
+                e1.name_en as first_element_en,
+                e1.emoji as first_element_emoji,
+                e2.name_cn as second_element_cn,
+                e2.name_en as second_element_en,
+                e2.emoji as second_element_emoji
+            FROM first_discoveries fd
+            LEFT JOIN elements e1 ON fd.first_element_id = e1.id
+            LEFT JOIN elements e2 ON fd.second_element_id = e2.id
+            WHERE fd.element_id = ?
+        `, [id]);
+        
+        return {
+            element,
+            discovery: discovery || null
+        };
+    }
+});
+
 // 获取用户发现的所有元素
 fastify.route({
     method: 'GET',
@@ -378,10 +595,17 @@ fastify.route({
         const user = await authenticateUser(request, reply);
         if (!user) return;
         
-        const { firstElementId, secondElementId } = request.body;
+        let { firstElementId, secondElementId } = request.body;
         
         if (!firstElementId || !secondElementId) {
             return reply.code(400).send({ error: '请提供两个元素ID' });
+        }
+        
+        // 如果顺序不重要，则按字典序排列
+        if (!CRAFT_ORDER_MATTERS) {
+            if (firstElementId > secondElementId) {
+                [firstElementId, secondElementId] = [secondElementId, firstElementId];
+            }
         }
         
         // 获取元素信息
@@ -413,12 +637,19 @@ try {
     await fastify.listen({port: PORT, host: '0.0.0.0'})
     console.log(`✅ 服务器启动成功`)
     console.log(`   端口: ${PORT}`)
-    console.log(`   AI模型: ${MODEL_NAME}`)
-    console.log(`   API地址: ${SILICONFLOW_API_URL}`)
-    if (!SILICONFLOW_API_KEY) {
-        console.warn('⚠️  警告: SILICONFLOW_API_KEY 未设置，合成功能将无法使用！')
+    console.log(`   AI模式: ${AI_MODE === 'local' ? '本地模型' : 'API调用'}`)
+    
+    if (AI_MODE === 'local') {
+        console.log(`   模型路径: ${LOCAL_MODEL_PATH}`)
+        console.log(`   HF镜像: ${HF_ENDPOINT}`)
     } else {
-        console.log(`   API Key: ${SILICONFLOW_API_KEY.substring(0, 10)}...`)
+        console.log(`   AI模型: ${MODEL_NAME}`)
+        console.log(`   API地址: ${SILICONFLOW_API_URL}`)
+        if (!SILICONFLOW_API_KEY) {
+            console.warn('⚠️  警告: SILICONFLOW_API_KEY 未设置，合成功能将无法使用！')
+        } else {
+            console.log(`   API Key: ${SILICONFLOW_API_KEY.substring(0, 10)}...`)
+        }
     }
 } catch (err) {
     fastify.log.error(err)

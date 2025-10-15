@@ -6,6 +6,7 @@ import type {DragItem} from './interfaces'
 import {reactive, ref} from 'vue'
 import ItemCard from "@/components/ItemCard.vue";
 import AvailableResources from "@/components/AvailableResources.vue";
+import CustomDragLayer from "@/components/CustomDragLayer.vue";
 import {useBoxesStore} from "@/stores/useBoxesStore";
 import {storeToRefs} from "pinia";
 
@@ -75,10 +76,13 @@ const [, drop] = useDrop(() => ({
 </script>
 
 <template>
-  <div ref="containerElement">
+  <div ref="containerElement" class="select-none">
+    <!-- 自定义拖拽层 - 用于移动端显示拖拽预览 -->
+    <CustomDragLayer />
 
-    <main class="flex gap-x-3">
-      <div class="w-3/4">
+    <main class="flex flex-row gap-3 h-[calc(100vh-120px)] overflow-hidden">
+      <!-- 工作区 - 固定高度，不可滚动 -->
+      <div class="w-full md:w-3/4 h-[calc(100vh-35vh-80px)] md:h-full overflow-hidden relative">
         <div :ref="drop" class="container">
           <Box
               v-for="(value, key) in boxes"
@@ -87,9 +91,14 @@ const [, drop] = useDrop(() => ({
               :left="value.left"
               :top="value.top"
               :loading="value.loading"
+              :element-id="value.elementId"
+              :name_cn="value.name_cn"
+              :name_en="value.name_en"
+              :emoji="value.emoji"
+              :discoverer_name="value.discoverer_name"
           >
             <ItemCard 
-              size="large" 
+              :size="'large'"
               :id="key" 
               :element-id="value.elementId"
               :name_cn="value.name_cn"
@@ -100,8 +109,10 @@ const [, drop] = useDrop(() => ({
           </Box>
         </div>
       </div>
-      <div class="w-1/4 bg-white shadow px-4 py-3 border-gray-200 border rounded-lg overflow-y-scroll max-h-[80vh]">
-        <h2 class="font-semibold">元素列表</h2>
+      
+      <!-- 元素列表 - 移动端固定在底部，桌面端固定在右侧 -->
+      <div class="fixed md:relative bottom-0 left-0 right-0 w-full md:w-1/4 h-[35vh] md:h-full bg-white shadow px-4 py-3 border-t md:border border-gray-200 rounded-t-xl md:rounded-lg overflow-y-auto z-40">
+        <h2 class="font-semibold select-none mb-2">元素列表</h2>
         <AvailableResources></AvailableResources>
       </div>
     </main>
@@ -115,6 +126,13 @@ const [, drop] = useDrop(() => ({
 .container {
   position: relative;
   width: 100%;
-  height: 90vh;
+  height: 100%; /* 填满父容器 */
+  overflow: hidden; /* 不允许滚动 */
+}
+
+@media (min-width: 768px) {
+  .container {
+    height: 100%; /* 桌面端填满父容器 */
+  }
 }
 </style>

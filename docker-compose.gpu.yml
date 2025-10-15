@@ -1,0 +1,18 @@
+# GPU 支持配置覆盖文件
+# 使用方式: docker-compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+# 
+# 前提条件:
+# 1. 安装 NVIDIA Docker Runtime: https://github.com/NVIDIA/nvidia-docker
+# 2. 设置 AI_MODE=local 和 DOCKERFILE=Dockerfile.local 在 .env 文件中
+
+services:
+  backend:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all  # 使用所有可用GPU，也可以指定数量如 count: 1
+              capabilities: [gpu]
+    runtime: nvidia  # 使用 NVIDIA runtime
+
