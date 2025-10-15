@@ -11,14 +11,30 @@ import {storeToRefs} from "pinia";
 
 const store = useBoxesStore()
 const { boxes } = store
-const moveBox = (id: string, left: number, top: number, title?: string, emoji?: string) => {
+const moveBox = (
+  id: string, 
+  left: number, 
+  top: number, 
+  elementId?: string, 
+  name_cn?: string, 
+  name_en?: string, 
+  emoji?: string, 
+  discoverer_name?: string
+) => {
   if (id) {
     Object.assign(boxes[id], {left, top})
   } else {
     const key = Math.random().toString(36).substring(7);
-    boxes[key] = {top, left, title, emoji}
+    boxes[key] = {
+      top, 
+      left, 
+      elementId, 
+      name_cn, 
+      name_en, 
+      emoji, 
+      discoverer_name
+    }
     console.log(boxes)
-
   }
 }
 
@@ -41,7 +57,16 @@ const [, drop] = useDrop(() => ({
       if(delta && delta.x && delta.y){
         const left = Math.round(delta.x - containerCoords.left - 40)
         const top = Math.round(delta.y - containerCoords.top - 15)
-        moveBox(null, left, top, item.title, item.emoji)
+        moveBox(
+          null, 
+          left, 
+          top, 
+          item.elementId, 
+          item.name_cn, 
+          item.name_en, 
+          item.emoji, 
+          item.discoverer_name
+        )
       }
     }
     return undefined
@@ -63,12 +88,20 @@ const [, drop] = useDrop(() => ({
               :top="value.top"
               :loading="value.loading"
           >
-            <ItemCard size="large" :id="key" :title="value.title" :emoji="value.emoji"/>
+            <ItemCard 
+              size="large" 
+              :id="key" 
+              :element-id="value.elementId"
+              :name_cn="value.name_cn"
+              :name_en="value.name_en"
+              :emoji="value.emoji"
+              :discoverer_name="value.discoverer_name"
+            />
           </Box>
         </div>
       </div>
       <div class="w-1/4 bg-white shadow px-4 py-3 border-gray-200 border rounded-lg overflow-y-scroll max-h-[80vh]">
-        <h2 class="font-semibold">Resources</h2>
+        <h2 class="font-semibold">元素列表</h2>
         <AvailableResources></AvailableResources>
       </div>
     </main>

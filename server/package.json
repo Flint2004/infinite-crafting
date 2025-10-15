@@ -1,7 +1,7 @@
 {
   "name": "opencraft",
-  "version": "1.0.0",
-  "description": "An open source clone of infinite craft",
+  "version": "2.0.0",
+  "description": "An open source clone of infinite craft - Chinese Version with DeepSeek-V3",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -11,11 +11,9 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@elysiajs/cors": "^0.8.0",
     "@fastify/cors": "^9.0.1",
-    "elysia": "^0.8.17",
+    "axios": "^1.6.7",
     "fastify": "^4.26.2",
-    "node-llama-cpp": "^2.8.8",
     "path": "^0.12.7",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",

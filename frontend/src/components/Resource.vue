@@ -3,14 +3,24 @@ import { useDrag } from 'vue3-dnd'
 import { ItemTypes } from './ItemTypes'
 import { toRefs } from '@vueuse/core'
 import ItemCard from "@/components/ItemCard.vue";
+
 const props = defineProps<{
+  id: string
   emoji: string
-  title: string
+  name_cn: string
+  name_en: string
+  discoverer_name?: string
 }>()
 
 const [collect, drag] = useDrag(() => ({
   type: ItemTypes.BOX,
-  item: { title: props.title, emoji: props.emoji },
+  item: { 
+    elementId: props.id,
+    name_cn: props.name_cn,
+    name_en: props.name_en,
+    emoji: props.emoji,
+    discoverer_name: props.discoverer_name
+  },
   collect: monitor => ({
     isDragging: monitor.isDragging(),
   }),
@@ -25,7 +35,15 @@ const { isDragging } = toRefs(collect)
       role="Box"
       data-testid="box"
   >
-    <ItemCard :title="title" :emoji="emoji"></ItemCard>
+    <ItemCard 
+      :id="id"
+      :element-id="id"
+      :name_cn="name_cn"
+      :name_en="name_en"
+      :emoji="emoji"
+      :discoverer_name="discoverer_name"
+      size="small"
+    />
   </div>
 </template>
 

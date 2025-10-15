@@ -1,17 +1,52 @@
 services:
-  frontend:
-    build: ./frontend
+  backend:
+    build: ./server
+    container_name: opencraft-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - SILICONFLOW_API_KEY=${SILICONFLOW_API_KEY}
+      - SILICONFLOW_API_URL=${SILICONFLOW_API_URL:-https://api.siliconflow.cn/v1/chat/completions}
+      - AI_MODEL=${AI_MODEL:-deepseek-ai/DeepSeek-V3.2-Exp}
+      - AI_TEMPERATURE=${AI_TEMPERATURE:-0.7}
+      - AI_MAX_TOKENS=${AI_MAX_TOKENS:-200}
+      - PORT=3000
+      - DB_PATH=/app/data/cache.db
+    volumes:
+      - ./server/data:/app/data
+    networks:
+      - opencraft-network
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${NETWORK_NAME:-reverse-proxy-docker-traefik_routing}"
-      # http
+      - "traefik.http.routers.opencraft-backend.rule=Host(`${BACKEND_DOMAIN:-api.opencraft.bufferhead.com}`)"
+      - "traefik.http.routers.opencraft-backend.entrypoints=web"
+      - "traefik.http.services.opencraft-backend.loadbalancer.server.port=3000"
+
+  frontend:
+    build: ./frontend
+    container_name: opencraft-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://backend:3000}
+      - VITE_APP_TITLE=${VITE_APP_TITLE:-OpenCraft}
+    networks:
+      - opencraft-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${NETWORK_NAME:-reverse-proxy-docker-traefik_routing}"
       - "traefik.http.routers.opencraft-frontend.rule=Host(`${FRONTEND_DOMAIN:-opencraft.bufferhead.com}`)"
       - "traefik.http.routers.opencraft-frontend.entrypoints=web"
       - "traefik.http.services.opencraft-frontend.loadbalancer.server.port=5173"
-    networks:
-      - proxy
 
 networks:
+  opencraft-network:
+    driver: bridge
   proxy:
     name: "${NETWORK_NAME:-reverse-proxy-docker-traefik_routing}"
     external: true

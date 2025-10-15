@@ -4,5 +4,8 @@ export interface DragItem {
     top: number|null
     left: number|null
     emoji: string
-    title: string
+    elementId: string
+    name_cn: string
+    name_en: string
+    discoverer_name?: string
 }
