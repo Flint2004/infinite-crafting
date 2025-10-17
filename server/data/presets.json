@@ -15,7 +15,8 @@
     {
       "element1_cn": "木",
       "element2_cn": "木",
-      "result": { "name_cn": "森林", "name_en": "Forest", "emoji": "🌳" }
+      "result": { "name_cn": "森林", "name_en": "Forest", "emoji": "🌳" },
+      "is_few_shot": true
     },
     {
       "element1_cn": "水",
@@ -30,7 +31,8 @@
     {
       "element1_cn": "土",
       "element2_cn": "土",
-      "result": { "name_cn": "山", "name_en": "Mountain", "emoji": "⛰️" }
+      "result": { "name_cn": "山", "name_en": "Mountain", "emoji": "⛰️" },
+      "is_few_shot": true
     },
     {
       "element1_cn": "金",
@@ -45,7 +47,8 @@
     {
       "element1_cn": "水",
       "element2_cn": "火",
-      "result": { "name_cn": "蒸汽", "name_en": "Steam", "emoji": "💨" }
+      "result": { "name_cn": "蒸汽", "name_en": "Steam", "emoji": "💨" },
+      "is_few_shot": true
     },
     {
       "element1_cn": "火",

@@ -39,7 +39,7 @@ const PROMPT_RULES_PATH = process.env.PROMPT_RULES_PATH || path.join(__dirname, 
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
 
 // 全局系统提示词
-let systemPromptRules = '';
+let fewShotExamples = [];
 
 // 合成配置
 // CRAFT_ORDER_MATTERS=true 表示顺序重要，A+B和B+A会产生不同结果
@@ -202,6 +202,17 @@ async function loadPresetsAndBaseElements() {
                 const secondElement = await db.get('SELECT * FROM elements WHERE name_cn = ?', [recipe.element2_cn]);
 
                 if (firstElement && secondElement && resultElement) {
+                    if (recipe.is_few_shot) {
+                        console.log(`   - [Few-shot] 添加示例: ${recipe.element1_cn} + ${recipe.element2_cn} -> ${recipe.result.name_cn}`);
+                        fewShotExamples.push({
+                            input: `输入：\n${recipe.element1_cn} + ${recipe.element2_cn}`,
+                            output: JSON.stringify({
+                                name_cn: recipe.result.name_cn,
+                                name_en: recipe.result.name_en,
+                                emoji: recipe.result.emoji
+                            })
+                        });
+                    }
                     const existingCraft = await db.get(
                         'SELECT id FROM craft_cache WHERE (first_element_id = ? AND second_element_id = ?) OR (first_element_id = ? AND second_element_id = ?)',
                         [firstElement.id, secondElement.id, secondElement.id, firstElement.id]
@@ -247,29 +258,6 @@ async function loadPresetsAndBaseElements() {
     }
 }
 
-// 加载提示词规则
-async function loadPromptRules() {
-    try {
-        await fs.access(PROMPT_RULES_PATH);
-        systemPromptRules = await fs.readFile(PROMPT_RULES_PATH, 'utf8');
-        console.log(`✅ 成功加载自定义提示词规则: ${PROMPT_RULES_PATH}`);
-    } catch (error) {
-        if (error.code === 'ENOENT') {
-            console.log(`ℹ️  未找到自定义提示词规则文件，使用默认规则。路径: ${PROMPT_RULES_PATH}`);
-            // 使用API版本的规则作为默认值，因为它更通用
-            systemPromptRules = 
-                '1. 答案必须是一个名词，可以是：物体、材料、人物、公司、动物、职业、食物、地点、物品、情感、事件、概念、自然现象、身体部位、交通工具、运动、服装、家具、科技、建筑、乐器、饮料、植物、学科、互联网梗等。' +
-                '2. 答案必须与两个元素都相关，可以是组合产物、相互作用的结果、或者包含关系，尽可能和原来的元素不同。' +
-                '3. 必要时可以产生其中一个元素（例如：木+森林=森林，水+海洋=海洋）。' +
-                '4. emoji字段必须只包含一个emoji字符，不要返回多个emoji。' +
-                '5. 尽量避免在答案中同时包含两个原始元素的名称，非专有名词应该使用较短的词汇，尽可能使用已存在的词汇。' +
-            ';';
-        } else {
-            console.error('❌ 加载提示词规则文件失败:', error);
-        }
-    }
-}
-
 // 初始化本地模型
 async function initializeLocalModel() {
     if (AI_MODE !== 'local') {
@@ -308,13 +296,10 @@ async function startServer() {
     // 1. 初始化数据库（仅建表）
     await initializeDatabase();
     
-    // 2. 加载提示词规则
-    await loadPromptRules();
-
-    // 3. 加载基础元素和预设
+    // 2. 加载基础元素和预设
     await loadPresetsAndBaseElements();
     
-    // 4. 如果是本地模式，初始化模型
+    // 3. 如果是本地模式，初始化模型
     if (AI_MODE === 'local') {
         await initializeLocalModel();
     }
@@ -450,15 +435,18 @@ async function startServer() {
             }
         });
         
-        const systemPrompt = 
-            '你是一个帮助人们通过组合两个元素来创造新事物的助手。\n' +
-            '规则：\n' +
-            systemPromptRules + '\n' +
-            '请用中文回答名词（name_cn字段），并用英文提供翻译（name_en字段）。';
+        const systemPrompt = '你是合成魔法师，可以根据想象生成任何物品。根据用户提示使用json返回物品名称和单个emoji';
 
-        const answerPrompt = '请告诉我如果组合"' + firstElement.name_cn + '"（' + firstElement.name_en + '）和"' + secondElement.name_cn + '"（' + secondElement.name_en + '）会产生什么？';
+        let prompt = `<s>[INST] ${systemPrompt} [/INST]</s>\n`;
 
-        const prompt = '<s>[INST] ' + systemPrompt + answerPrompt + '[/INST]</s>\n';
+        for (const example of fewShotExamples) {
+            const exampleUserInput = example.input;
+            const exampleAssistantOutput = example.output;
+            prompt += `<s>[INST] ${exampleUserInput} [/INST] ${exampleAssistantOutput} </s>\n`;
+        }
+        
+        const currentUserInput = `输入：\n${firstElement.name_cn} + ${secondElement.name_cn}`;
+        prompt += `<s>[INST] ${currentUserInput} [/INST]`;
 
         const result = await session.prompt(prompt, {
             grammar,
@@ -510,30 +498,29 @@ async function startServer() {
             throw new Error('SILICONFLOW_API_KEY 环境变量未设置');
         }
 
-        const systemPrompt = 
-            '你是一个帮助人们通过组合两个元素来创造新事物的助手。\n' +
-            '规则：\n' +
-            systemPromptRules + '\n' +
-            '请严格按照JSON格式回答，包含name_cn（中文名）、name_en（英文翻译）和emoji（一个emoji字符）三个字段。\n' +
-            '示例格式：{"name_cn": "蒸汽", "name_en": "Steam", "emoji": "💨"}';
+        const systemPrompt = '你是合成魔法师，可以根据想象生成任何物品。根据用户提示使用json返回物品名称和单个emoji';
 
-        const userPrompt = '请告诉我如果组合"' + firstElement.name_cn + '"（' + firstElement.name_en + '）和"' + secondElement.name_cn + '"（' + secondElement.name_en + '）会产生什么？直接返回JSON格式的答案，emoji必须只有一个字符。';
+        const messages = [
+            {
+                role: 'system',
+                content: systemPrompt
+            }
+        ];
+
+        for (const example of fewShotExamples) {
+            messages.push({ role: 'user', content: example.input });
+            messages.push({ role: 'assistant', content: example.output });
+        }
+        
+        const userPrompt = `输入：\n${firstElement.name_cn} + ${secondElement.name_cn}`;
+        messages.push({ role: 'user', content: userPrompt });
 
         try {
             const response = await axios.post(
                 SILICONFLOW_API_URL,
                 {
                     model: MODEL_NAME,
-                    messages: [
-                        {
-                            role: 'system',
-                            content: systemPrompt
-                        },
-                        {
-                            role: 'user',
-                            content: userPrompt
-                        }
-                    ],
+                    messages: messages,
                     temperature: AI_TEMPERATURE,
                     max_tokens: AI_MAX_TOKENS,
                     response_format: { type: 'json_object' }
