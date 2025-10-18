@@ -492,10 +492,13 @@ async function startServer() {
         }
         prompt += `<s>[INST] ${currentUserInput} [/INST]`;
 
+        const startTime = Date.now();
         const result = await session.prompt(prompt, {
             grammar,
             maxTokens: AI_MAX_TOKENS
         });
+        const duration = Date.now() - startTime;
+        console.log(`[LLM Local] Name generation took ${duration}ms`);
 
         const parsed = JSON.parse(result);
         
@@ -579,6 +582,7 @@ async function startServer() {
         messages.push({ role: 'user', content: userPrompt });
 
         try {
+            const startTime = Date.now();
             const response = await axios.post(
                 SILICONFLOW_API_URL,
                 {
@@ -595,6 +599,10 @@ async function startServer() {
                     }
                 }
             );
+            const duration = Date.now() - startTime;
+
+            const usage = response.data.usage;
+            console.log(`[LLM API] Request took ${duration}ms. Tokens: ${usage.total_tokens} (Prompt: ${usage.prompt_tokens}, Completion: ${usage.completion_tokens})`);
 
             const content = response.data.choices[0].message.content;
             const parsed = JSON.parse(content);
