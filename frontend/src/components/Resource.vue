@@ -1,34 +1,36 @@
 <script setup lang="ts">
 import { useDrag } from 'vue3-dnd'
 import { ItemTypes } from './ItemTypes'
-import type { Element } from './interfaces'
-import { getEmptyImage } from 'react-dnd-html5-backend'
-import { onMounted, toRefs } from 'vue'
+import { toRefs } from '@vueuse/core'
 import ItemCard from "@/components/ItemCard.vue";
 import { useBoxesStore } from '@/stores/useBoxesStore'
 import { ref, watch } from 'vue'
 import request from '@/utils/request'
 
 const props = defineProps<{
-  element: Element
+  id: string
+  emoji: string
+  name_cn: string
+  name_en: string
+  discoverer_name?: string
 }>()
 
-const { element } = toRefs(props)
 const boxesStore = useBoxesStore()
 
-const [{ isDragging }, drag, preview] = useDrag({
+const [collect, drag, preview] = useDrag(() => ({
   type: ItemTypes.BOX,
   item: { 
-    elementId: element.value.id,
-    name_cn: element.value.name_cn,
-    name_en: element.value.name_en,
-    emoji: element.value.emoji,
-    discoverer_name: element.value.discoverer_name
+    elementId: props.id,
+    name_cn: props.name_cn,
+    name_en: props.name_en,
+    emoji: props.emoji,
+    discoverer_name: props.discoverer_name
   },
   collect: monitor => ({
     isDragging: monitor.isDragging(),
   }),
-})
+}))
+const { isDragging } = toRefs(collect)
 
 // 元素详情
 const showDetails = ref(false)
@@ -65,11 +67,11 @@ function handleClick(event: MouseEvent) {
   
   // 添加元素到工作区
   boxesStore.addBox({
-    elementId: element.value.id,
-    name_cn: element.value.name_cn,
-    name_en: element.value.name_en,
-    emoji: element.value.emoji,
-    discoverer_name: element.value.discoverer_name,
+    elementId: props.id,
+    name_cn: props.name_cn,
+    name_en: props.name_en,
+    emoji: props.emoji,
+    discoverer_name: props.discoverer_name,
     left: randomLeft,
     top: randomTop
   })
@@ -78,7 +80,7 @@ function handleClick(event: MouseEvent) {
 // 显示元素详情（通用函数）
 async function showElementDetails() {
   try {
-    const response = await request.get(`/elements/${element.value.id}/details`)
+    const response = await request.get(`/elements/${props.id}/details`)
     elementDetails.value = response.data
     showDetails.value = true
   } catch (err) {
@@ -159,12 +161,12 @@ function handleTouchEnd() {
     >
       <div :ref="drag" style="width: 100%; height: 100%">
       <ItemCard 
-        :id="element.id"
-        :element-id="element.id"
-        :name_cn="element.name_cn"
-        :name_en="element.name_en"
-        :emoji="element.emoji"
-        :discoverer_name="element.discoverer_name"
+        :id="id"
+        :element-id="id"
+        :name_cn="name_cn"
+        :name_en="name_en"
+        :emoji="emoji"
+        :discoverer_name="discoverer_name"
         size="small"
       />
       </div>

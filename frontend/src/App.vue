@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {RouterLink, RouterView, useRouter} from 'vue-router'
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useUserStore } from '@/stores/useUserStore'
 import { useResourcesStore } from '@/stores/useResourcesStore'
 import { useBoxesStore } from '@/stores/useBoxesStore'
@@ -12,10 +12,6 @@ const boxesStore = useBoxesStore()
 
 const showUserMenu = ref(false)
 const showLogoutModal = ref(false)
-
-onMounted(() => {
-  userStore.initializeUser()
-})
 
 function showLogoutDialog() {
   showUserMenu.value = false
