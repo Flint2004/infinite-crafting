@@ -4,7 +4,6 @@ import { ItemTypes } from './ItemTypes'
 import type { Element } from './interfaces'
 import { getEmptyImage } from 'react-dnd-html5-backend'
 import { onMounted, toRefs } from 'vue'
-import { useConfigStore } from '@/stores/useConfigStore'
 import ItemCard from "@/components/ItemCard.vue";
 import { useBoxesStore } from '@/stores/useBoxesStore'
 import { ref, watch } from 'vue'
@@ -15,7 +14,6 @@ const props = defineProps<{
 }>()
 
 const { element } = toRefs(props)
-const configStore = useConfigStore()
 const boxesStore = useBoxesStore()
 
 const [{ isDragging }, drag, preview] = useDrag({
