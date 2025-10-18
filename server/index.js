@@ -482,10 +482,8 @@ async function startServer() {
             if (LANGUAGE_MODE === 'both') {
                 newOutput.name_cn = parsedOutput.name_cn;
                 newOutput.name_en = parsedOutput.name_en;
-            } else if (LANGUAGE_MODE === 'cn') {
-                newOutput.name = parsedOutput.name_cn;
-            } else if (LANGUAGE_MODE === 'en') {
-                newOutput.name = parsedOutput.name_en;
+            } else {
+                newOutput.name = parsedOutput.name;
             }
             
             const assistantOutput = JSON.stringify(newOutput);
@@ -549,7 +547,7 @@ async function startServer() {
         if (LANGUAGE_MODE === 'both') {
             nameFields = ['`name_cn` (中文名)', '`name_en` (英文名)'];
         } else {
-            nameFields = ['`name` (名称)'];
+            nameFields = ['`name`'];
         }
         const systemPrompt = `你是合成魔法师，可以根据想象生成任何物品。根据用户提示使用json返回一个包含 ${nameFields.join('和')} 以及一个 \`emoji\` 字段的对象。`;
 
@@ -567,10 +565,8 @@ async function startServer() {
             if (LANGUAGE_MODE === 'both') {
                 newOutput.name_cn = parsedOutput.name_cn;
                 newOutput.name_en = parsedOutput.name_en;
-            } else if (LANGUAGE_MODE === 'cn') {
-                newOutput.name = parsedOutput.name_cn;
-            } else if (LANGUAGE_MODE === 'en') {
-                newOutput.name = parsedOutput.name_en;
+            } else {
+                newOutput.name = parsedOutput.name;
             }
             const assistantOutput = JSON.stringify(newOutput);
 
