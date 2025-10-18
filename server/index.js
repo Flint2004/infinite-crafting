@@ -97,8 +97,8 @@ async function initializeDatabase() {
     await db.exec(`
         CREATE TABLE IF NOT EXISTS elements (
             id TEXT PRIMARY KEY,
-            name_cn TEXT NOT NULL,
-            name_en TEXT NOT NULL,
+            name_cn TEXT,
+            name_en TEXT,
             emoji TEXT NOT NULL,
             discoverer_id INTEGER,
             discoverer_name TEXT,
@@ -204,7 +204,13 @@ async function loadPresetsAndBaseElements() {
 
                 if (firstElement && secondElement && resultElement) {
                     if (recipe.is_few_shot) {
-                        const input = `输入：\n${firstElement.name_cn} (${firstElement.name_en}) + ${secondElement.name_cn} (${secondElement.name_en})`;
+                        const e1 = LANGUAGE_MODE === 'en' ? firstElement.name_en : firstElement.name_cn;
+                        const e2 = LANGUAGE_MODE === 'en' ? secondElement.name_en : secondElement.name_cn;
+                        const both_e1 = ` (${firstElement.name_en})`;
+                        const both_e2 = ` (${secondElement.name_en})`;
+
+                        const input = `输入：\n${e1}${LANGUAGE_MODE === 'both' ? both_e1 : ''} + ${e2}${LANGUAGE_MODE === 'both' ? both_e2 : ''}`;
+
                         console.log(`   - [Few-shot] 添加示例: ${input}`);
                         fewShotExamples.push({
                             input: input,
@@ -376,11 +382,17 @@ async function startServer() {
                 existing = await db.get('SELECT * FROM elements WHERE name_cn = ?', [name_cn]);
             } else if (LANGUAGE_MODE === 'en' && name_en) {
                 existing = await db.get('SELECT * FROM elements WHERE name_en = ?', [name_en]);
-            } else if (LANGUAGE_MODE === 'both' && name_cn && name_en) {
+            } else if (name_cn && name_en) {
                 existing = await db.get('SELECT * FROM elements WHERE name_cn = ? AND name_en = ?', [name_cn, name_en]);
-            } else if (!name_cn && !name_en) {
-                // 如果AI没有返回任何名称，则合成失败
-                return null;
+            } else if (name_cn) {
+                existing = await db.get('SELECT * FROM elements WHERE name_cn = ?', [name_cn]);
+            } else if (name_en) {
+                existing = await db.get('SELECT * FROM elements WHERE name_en = ?', [name_en]);
+            }
+
+            if (!existing && !name_cn && !name_en) {
+                 console.error('AI未返回有效名称');
+                 return null;
             }
             
             let elementId;
@@ -395,7 +407,7 @@ async function startServer() {
                 elementId = generateUniqueId();
                 await db.run(
                     'INSERT INTO elements (id, name_cn, name_en, emoji, discoverer_id, discoverer_name) VALUES (?, ?, ?, ?, ?, ?)',
-                    [elementId, name_cn || '', name_en || '', emoji, user.id, user.username]
+                    [elementId, name_cn, name_en, emoji, user.id, user.username]
                 );
                 newElement = await db.get('SELECT * FROM elements WHERE id = ?', [elementId]);
                 
@@ -437,30 +449,21 @@ async function startServer() {
         
         const { LlamaChatSession, LlamaJsonSchemaGrammar } = await import('node-llama-cpp');
         const session = new LlamaChatSession({context: llamaContext});
-        
-        const properties = {};
+
+        let properties = { "emoji": {"type": "string"} };
         if (LANGUAGE_MODE === 'both') {
-            properties.name_cn = { "type": "string" };
-            properties.name_en = { "type": "string" };
+            properties.name_cn = {"type": "string"};
+            properties.name_en = {"type": "string"};
         } else {
-            properties.name = { "type": "string" };
+            properties.name = {"type": "string"};
         }
         
         const grammar = new LlamaJsonSchemaGrammar({
             "type": "object",
-            "properties": {
-                ...properties,
-                "emoji": {"type": "string"}
-            }
+            "properties": properties
         });
         
-        const nameFields = [];
-        if (LANGUAGE_MODE === 'both') {
-            nameFields.push("`name_cn` (中文名)和`name_en` (英文名)");
-        } else {
-            nameFields.push("`name`");
-        }
-        const systemPrompt = `你是合成魔法师，可以根据想象生成任何物品。根据用户提示使用json返回一个包含 ${nameFields.join('和')} 以及一个 \`emoji\` 字段的对象。`;
+        const systemPrompt = '你是合成魔法师，可以根据想象生成任何物品。根据用户提示使用json返回物品名称和单个emoji';
 
         let prompt = `<s>[INST] ${systemPrompt} [/INST]</s>\n`;
 
@@ -482,14 +485,12 @@ async function startServer() {
             prompt += `<s>[INST] ${input} [/INST] ${assistantOutput} </s>\n`;
         }
         
-        let currentUserInput;
-        if (LANGUAGE_MODE === 'both') {
-            currentUserInput = `输入：\n${firstElement.name_cn} (${firstElement.name_en}) + ${secondElement.name_cn} (${secondElement.name_en})`;
-        } else {
-            const input1 = LANGUAGE_MODE === 'en' ? firstElement.name_en : firstElement.name_cn;
-            const input2 = LANGUAGE_MODE === 'en' ? secondElement.name_en : secondElement.name_cn;
-            currentUserInput = `输入：\n${input1} + ${input2}`;
-        }
+        const e1 = LANGUAGE_MODE === 'en' ? firstElement.name_en : firstElement.name_cn;
+        const e2 = LANGUAGE_MODE === 'en' ? secondElement.name_en : secondElement.name_cn;
+        const both_e1 = ` (${firstElement.name_en})`;
+        const both_e2 = ` (${secondElement.name_en})`;
+
+        const currentUserInput = `输入：\n${e1}${LANGUAGE_MODE === 'both' ? both_e1 : ''} + ${e2}${LANGUAGE_MODE === 'both' ? both_e2 : ''}`;
         prompt += `<s>[INST] ${currentUserInput} [/INST]`;
 
         const startTime = Date.now();
@@ -537,14 +538,13 @@ async function startServer() {
             throw new Error('SILICONFLOW_API_KEY 环境变量未设置');
         }
 
-        const nameFields = [];
+        let nameFields = [];
         if (LANGUAGE_MODE === 'both') {
-            nameFields.push("`name_cn` (中文名)、`name_en` (英文名)");
+            nameFields = ['`name_cn` (中文名)', '`name_en` (英文名)'];
         } else {
-            nameFields.push("`name`");
+            nameFields = ['`name` (名称)'];
         }
         const systemPrompt = `你是合成魔法师，可以根据想象生成任何物品。根据用户提示使用json返回一个包含 ${nameFields.join('和')} 以及一个 \`emoji\` 字段的对象。`;
-
 
         const messages = [
             {
@@ -570,15 +570,13 @@ async function startServer() {
             messages.push({ role: 'user', content: example.input });
             messages.push({ role: 'assistant', content: assistantOutput });
         }
+
+        const e1 = LANGUAGE_MODE === 'en' ? firstElement.name_en : firstElement.name_cn;
+        const e2 = LANGUAGE_MODE === 'en' ? secondElement.name_en : secondElement.name_cn;
+        const both_e1 = ` (${firstElement.name_en})`;
+        const both_e2 = ` (${secondElement.name_en})`;
         
-        let userPrompt;
-        if (LANGUAGE_MODE === 'both') {
-            userPrompt = `输入：\n${firstElement.name_cn} (${firstElement.name_en}) + ${secondElement.name_cn} (${secondElement.name_en})`;
-        } else {
-            const input1 = LANGUAGE_MODE === 'en' ? firstElement.name_en : firstElement.name_cn;
-            const input2 = LANGUAGE_MODE === 'en' ? secondElement.name_en : secondElement.name_cn;
-            userPrompt = `输入：\n${input1} + ${input2}`;
-        }
+        const userPrompt = `输入：\n${e1}${LANGUAGE_MODE === 'both' ? both_e1 : ''} + ${e2}${LANGUAGE_MODE === 'both' ? both_e2 : ''}`;
         messages.push({ role: 'user', content: userPrompt });
 
         try {
