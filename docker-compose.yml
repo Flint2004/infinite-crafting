@@ -15,6 +15,7 @@ services:
       - AI_TEMPERATURE=${AI_TEMPERATURE:-0.7}
       - AI_MAX_TOKENS=${AI_MAX_TOKENS:-200}
       - CRAFT_ORDER_MATTERS=${CRAFT_ORDER_MATTERS:-false}
+      - LANGUAGE_MODE=${LANGUAGE_MODE:-both}
       - LOCAL_MODEL_PATH=${LOCAL_MODEL_PATH:-/app/models/model.gguf}
       - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
       - PORT=3000
