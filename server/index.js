@@ -212,13 +212,20 @@ async function loadPresetsAndBaseElements() {
                         const input = `输入：\n${e1}${LANGUAGE_MODE === 'both' ? both_e1 : ''} + ${e2}${LANGUAGE_MODE === 'both' ? both_e2 : ''}`;
 
                         console.log(`   - [Few-shot] 添加示例: ${input}`);
+                        
+                        let output_template = { emoji: recipe.result.emoji };
+                        if (LANGUAGE_MODE === 'both') {
+                            output_template.name_cn = recipe.result.name_cn;
+                            output_template.name_en = recipe.result.name_en;
+                        } else if (LANGUAGE_MODE === 'cn') {
+                            output_template.name = recipe.result.name_cn;
+                        } else { // 'en'
+                            output_template.name = recipe.result.name_en;
+                        }
+
                         fewShotExamples.push({
                             input: input,
-                            output: JSON.stringify({
-                                name_cn: recipe.result.name_cn,
-                                name_en: recipe.result.name_en,
-                                emoji: recipe.result.emoji
-                            })
+                            output: JSON.stringify(output_template)
                         });
                     }
                     const existingCraft = await db.get(
