@@ -97,8 +97,8 @@ async function initializeDatabase() {
     await db.exec(`
         CREATE TABLE IF NOT EXISTS elements (
             id TEXT PRIMARY KEY,
-            name_cn TEXT,
-            name_en TEXT,
+            word_cn TEXT,
+            word_en TEXT,
             emoji TEXT NOT NULL,
             discoverer_id INTEGER,
             discoverer_name TEXT,
@@ -144,11 +144,11 @@ async function initializeDatabase() {
 
 // 默认基础元素（当presets.json不存在时使用）
 const defaultBaseElements = [
-    { id: 'base_metal', name_cn: '金', name_en: 'Metal', emoji: '⚙️' },
-    { id: 'base_wood', name_cn: '木', name_en: 'Wood', emoji: '🌲' },
-    { id: 'base_water', name_cn: '水', name_en: 'Water', emoji: '💧' },
-    { id: 'base_fire', name_cn: '火', name_en: 'Fire', emoji: '🔥' },
-    { id: 'base_earth', name_cn: '土', name_en: 'Earth', emoji: '🌍' }
+    { id: 'base_metal', word_cn: '金', word_en: 'Metal', emoji: '⚙️' },
+    { id: 'base_wood', word_cn: '木', word_en: 'Wood', emoji: '🌲' },
+    { id: 'base_water', word_cn: '水', word_en: 'Water', emoji: '💧' },
+    { id: 'base_fire', word_cn: '火', word_en: 'Fire', emoji: '🔥' },
+    { id: 'base_earth', word_cn: '土', word_en: 'Earth', emoji: '🌍' }
 ];
 
 // 加载预设合成表及基础元素
@@ -177,8 +177,8 @@ async function loadPresetsAndBaseElements() {
             const exists = await db.get('SELECT id FROM elements WHERE id = ?', [element.id]);
             if (!exists) {
                 await db.run(
-                    'INSERT INTO elements (id, name_cn, name_en, emoji, discoverer_name) VALUES (?, ?, ?, ?, ?)',
-                    [element.id, element.name_cn, element.name_en, element.emoji, '系统']
+                    'INSERT INTO elements (id, word_cn, word_en, emoji, discoverer_name) VALUES (?, ?, ?, ?, ?)',
+                    [element.id, element.word_cn, element.word_en, element.emoji, '系统']
                 );
             }
         }
@@ -186,28 +186,28 @@ async function loadPresetsAndBaseElements() {
         // 加载配方
         if (presets.recipes && presets.recipes.length > 0) {
             for (const recipe of presets.recipes) {
-                let resultElement = await db.get('SELECT * FROM elements WHERE name_cn = ?', [recipe.result.name_cn]);
+                let resultElement = await db.get('SELECT * FROM elements WHERE word_cn = ?', [recipe.result.word_cn]);
                 if (!resultElement) {
                     const newId = generateUniqueId();
                     await db.run(
-                        'INSERT INTO elements (id, name_cn, name_en, emoji, discoverer_name) VALUES (?, ?, ?, ?, ?)',
-                        [newId, recipe.result.name_cn, recipe.result.name_en, recipe.result.emoji, '预设']
+                        'INSERT INTO elements (id, word_cn, word_en, emoji, discoverer_name) VALUES (?, ?, ?, ?, ?)',
+                        [newId, recipe.result.word_cn, recipe.result.word_en, recipe.result.emoji, '预设']
                     );
                     resultElement = await db.get('SELECT * FROM elements WHERE id = ?', [newId]);
-                    console.log(`   - [元素] ${recipe.result.name_cn} (新)`);
+                    console.log(`   - [元素] ${recipe.result.word_cn} (新)`);
                 } else {
-                    console.log(`   - [元素] ${recipe.result.name_cn} (已存在)`);
+                    console.log(`   - [元素] ${recipe.result.word_cn} (已存在)`);
                 }
 
-                const firstElement = await db.get('SELECT * FROM elements WHERE name_cn = ?', [recipe.element1_cn]);
-                const secondElement = await db.get('SELECT * FROM elements WHERE name_cn = ?', [recipe.element2_cn]);
+                const firstElement = await db.get('SELECT * FROM elements WHERE word_cn = ?', [recipe.element1_cn]);
+                const secondElement = await db.get('SELECT * FROM elements WHERE word_cn = ?', [recipe.element2_cn]);
 
                 if (firstElement && secondElement && resultElement) {
                     if (recipe.is_few_shot) {
-                        const e1 = LANGUAGE_MODE === 'en' ? firstElement.name_en : firstElement.name_cn;
-                        const e2 = LANGUAGE_MODE === 'en' ? secondElement.name_en : secondElement.name_cn;
-                        const both_e1 = ` (${firstElement.name_en})`;
-                        const both_e2 = ` (${secondElement.name_en})`;
+                        const e1 = LANGUAGE_MODE === 'en' ? firstElement.word_en : firstElement.word_cn;
+                        const e2 = LANGUAGE_MODE === 'en' ? secondElement.word_en : secondElement.word_cn;
+                        const both_e1 = ` (${firstElement.word_en})`;
+                        const both_e2 = ` (${secondElement.word_en})`;
 
                         const input = `输入：\n${e1}${LANGUAGE_MODE === 'both' ? both_e1 : ''} + ${e2}${LANGUAGE_MODE === 'both' ? both_e2 : ''}`;
 
@@ -215,12 +215,12 @@ async function loadPresetsAndBaseElements() {
                         
                         let output_template = { emoji: recipe.result.emoji };
                         if (LANGUAGE_MODE === 'both') {
-                            output_template.name_cn = recipe.result.name_cn;
-                            output_template.name_en = recipe.result.name_en;
+                            output_template.word_cn = recipe.result.word_cn;
+                            output_template.word_en = recipe.result.word_en;
                         } else if (LANGUAGE_MODE === 'cn') {
-                            output_template.name = recipe.result.name_cn;
+                            output_template.word = recipe.result.word_cn;
                         } else { // 'en'
-                            output_template.name = recipe.result.name_en;
+                            output_template.word = recipe.result.word_en;
                         }
 
                         fewShotExamples.push({
@@ -238,9 +238,9 @@ async function loadPresetsAndBaseElements() {
                             'INSERT INTO craft_cache (first_element_id, second_element_id, result_element_id) VALUES (?, ?, ?)',
                             [firstElement.id, secondElement.id, resultElement.id]
                         );
-                        console.log(`     - [配方] ${recipe.element1_cn} + ${recipe.element2_cn} -> ${recipe.result.name_cn} (新)`);
+                        console.log(`     - [配方] ${recipe.element1_cn} + ${recipe.element2_cn} -> ${recipe.result.word_cn} (新)`);
                     } else {
-                        console.log(`     - [配方] ${recipe.element1_cn} + ${recipe.element2_cn} -> ${recipe.result.name_cn} (已存在)`);
+                        console.log(`     - [配方] ${recipe.element1_cn} + ${recipe.element2_cn} -> ${recipe.result.word_cn} (已存在)`);
                     }
                 } else {
                     console.warn(`   - [警告] 配方 "${recipe.element1_cn} + ${recipe.element2_cn}" 中的一个或多个元素不存在，跳过。`);
@@ -265,8 +265,8 @@ async function loadPresetsAndBaseElements() {
             const exists = await db.get('SELECT id FROM elements WHERE id = ?', [element.id]);
             if (!exists) {
                 await db.run(
-                    'INSERT INTO elements (id, name_cn, name_en, emoji, discoverer_name) VALUES (?, ?, ?, ?, ?)',
-                    [element.id, element.name_cn, element.name_en, element.emoji, '系统']
+                    'INSERT INTO elements (id, word_cn, word_en, emoji, discoverer_name) VALUES (?, ?, ?, ?, ?)',
+                    [element.id, element.word_cn, element.word_en, element.emoji, '系统']
                 );
             }
         }
@@ -376,28 +376,28 @@ async function startServer() {
             return cached;
         }
 
-        console.log(`合成: ${firstElement.name_cn}(${firstElement.name_en}) + ${secondElement.name_cn}(${secondElement.name_en})`);
+        console.log(`合成: ${firstElement.word_cn}(${firstElement.word_en}) + ${secondElement.word_cn}(${secondElement.word_en})`);
         
         const result = await generateElement(firstElement, secondElement);
 
         if (result) {
-            const { name_cn, name_en, emoji } = result;
+            const { word_cn, word_en, emoji } = result;
             let existing;
 
             // 根据语言模式，用不同方式检查元素是否存在
-            if (LANGUAGE_MODE === 'cn' && name_cn) {
-                existing = await db.get('SELECT * FROM elements WHERE name_cn = ?', [name_cn]);
-            } else if (LANGUAGE_MODE === 'en' && name_en) {
-                existing = await db.get('SELECT * FROM elements WHERE name_en = ?', [name_en]);
-            } else if (name_cn && name_en) {
-                existing = await db.get('SELECT * FROM elements WHERE name_cn = ? AND name_en = ?', [name_cn, name_en]);
-            } else if (name_cn) {
-                existing = await db.get('SELECT * FROM elements WHERE name_cn = ?', [name_cn]);
-            } else if (name_en) {
-                existing = await db.get('SELECT * FROM elements WHERE name_en = ?', [name_en]);
+            if (LANGUAGE_MODE === 'cn' && word_cn) {
+                existing = await db.get('SELECT * FROM elements WHERE word_cn = ?', [word_cn]);
+            } else if (LANGUAGE_MODE === 'en' && word_en) {
+                existing = await db.get('SELECT * FROM elements WHERE word_en = ?', [word_en]);
+            } else if (word_cn && word_en) {
+                existing = await db.get('SELECT * FROM elements WHERE word_cn = ? AND word_en = ?', [word_cn, word_en]);
+            } else if (word_cn) {
+                existing = await db.get('SELECT * FROM elements WHERE word_cn = ?', [word_cn]);
+            } else if (word_en) {
+                existing = await db.get('SELECT * FROM elements WHERE word_en = ?', [word_en]);
             }
 
-            if (!existing && !name_cn && !name_en) {
+            if (!existing && !word_cn && !word_en) {
                  console.error('AI未返回有效名称');
                  return null;
             }
@@ -413,8 +413,8 @@ async function startServer() {
                 // 新元素，记录发现者
                 elementId = generateUniqueId();
                 await db.run(
-                    'INSERT INTO elements (id, name_cn, name_en, emoji, discoverer_id, discoverer_name) VALUES (?, ?, ?, ?, ?, ?)',
-                    [elementId, name_cn, name_en, emoji, user.id, user.username]
+                    'INSERT INTO elements (id, word_cn, word_en, emoji, discoverer_id, discoverer_name) VALUES (?, ?, ?, ?, ?, ?)',
+                    [elementId, word_cn, word_en, emoji, user.id, user.username]
                 );
                 newElement = await db.get('SELECT * FROM elements WHERE id = ?', [elementId]);
                 
@@ -459,10 +459,10 @@ async function startServer() {
 
         let properties = { "emoji": {"type": "string"} };
         if (LANGUAGE_MODE === 'both') {
-            properties.name_cn = {"type": "string"};
-            properties.name_en = {"type": "string"};
+            properties.word_cn = {"type": "string"};
+            properties.word_en = {"type": "string"};
         } else {
-            properties.name = {"type": "string"};
+            properties.word = {"type": "string"};
         }
         
         const grammar = new LlamaJsonSchemaGrammar({
@@ -480,20 +480,20 @@ async function startServer() {
             let newOutput = { emoji: parsedOutput.emoji };
             
             if (LANGUAGE_MODE === 'both') {
-                newOutput.name_cn = parsedOutput.name_cn;
-                newOutput.name_en = parsedOutput.name_en;
+                newOutput.word_cn = parsedOutput.word_cn;
+                newOutput.word_en = parsedOutput.word_en;
             } else {
-                newOutput.name = parsedOutput.name;
+                newOutput.word = parsedOutput.word;
             }
             
             const assistantOutput = JSON.stringify(newOutput);
             prompt += `<s>[INST] ${input} [/INST] ${assistantOutput} </s>\n`;
         }
         
-        const e1 = LANGUAGE_MODE === 'en' ? firstElement.name_en : firstElement.name_cn;
-        const e2 = LANGUAGE_MODE === 'en' ? secondElement.name_en : secondElement.name_cn;
-        const both_e1 = ` (${firstElement.name_en})`;
-        const both_e2 = ` (${secondElement.name_en})`;
+        const e1 = LANGUAGE_MODE === 'en' ? firstElement.word_en : firstElement.word_cn;
+        const e2 = LANGUAGE_MODE === 'en' ? secondElement.word_en : secondElement.word_cn;
+        const both_e1 = ` (${firstElement.word_en})`;
+        const both_e2 = ` (${secondElement.word_en})`;
 
         const currentUserInput = `输入：\n${e1}${LANGUAGE_MODE === 'both' ? both_e1 : ''} + ${e2}${LANGUAGE_MODE === 'both' ? both_e2 : ''}`;
         prompt += `<s>[INST] ${currentUserInput} [/INST]`;
@@ -509,8 +509,8 @@ async function startServer() {
         const parsed = JSON.parse(result);
         
         // 验证结果
-        if (!parsed.name_cn && !parsed.name_en && !parsed.name) {
-            return { name_cn: null, name_en: null, emoji: '' };
+        if (!parsed.word_cn && !parsed.word_en && !parsed.word) {
+            return { word_cn: null, word_en: null, emoji: '' };
         }
 
         // 确保只有一个emoji
@@ -521,18 +521,18 @@ async function startServer() {
             emoji = emojiMatch[0];
         }
 
-        let name_cn = parsed.name_cn;
-        let name_en = parsed.name_en;
+        let word_cn = parsed.word_cn;
+        let word_en = parsed.word_en;
 
         if (LANGUAGE_MODE === 'cn') {
-            name_cn = parsed.name;
+            word_cn = parsed.word;
         } else if (LANGUAGE_MODE === 'en') {
-            name_en = parsed.name;
+            word_en = parsed.word;
         }
 
         return {
-            name_cn,
-            name_en,
+            word_cn,
+            word_en,
             emoji: emoji
         };
     }
@@ -545,9 +545,9 @@ async function startServer() {
 
         let nameFields = [];
         if (LANGUAGE_MODE === 'both') {
-            nameFields = ['`name_cn` (中文名)', '`name_en` (英文名)'];
+            nameFields = ['`word_cn` (中文)', '`word_en` (英文)'];
         } else {
-            nameFields = ['`name`'];
+            nameFields = ['`word`'];
         }
         const systemPrompt = `你是合成魔法师，可以根据想象生成任何物品。根据用户提示使用json返回一个包含 ${nameFields.join('和')} 以及一个 \`emoji\` 字段的对象。`;
 
@@ -563,10 +563,10 @@ async function startServer() {
             let newOutput = { emoji: parsedOutput.emoji };
 
             if (LANGUAGE_MODE === 'both') {
-                newOutput.name_cn = parsedOutput.name_cn;
-                newOutput.name_en = parsedOutput.name_en;
+                newOutput.word_cn = parsedOutput.word_cn;
+                newOutput.word_en = parsedOutput.word_en;
             } else {
-                newOutput.name = parsedOutput.name;
+                newOutput.word = parsedOutput.word;
             }
             const assistantOutput = JSON.stringify(newOutput);
 
@@ -574,10 +574,10 @@ async function startServer() {
             messages.push({ role: 'assistant', content: assistantOutput });
         }
 
-        const e1 = LANGUAGE_MODE === 'en' ? firstElement.name_en : firstElement.name_cn;
-        const e2 = LANGUAGE_MODE === 'en' ? secondElement.name_en : secondElement.name_cn;
-        const both_e1 = ` (${firstElement.name_en})`;
-        const both_e2 = ` (${secondElement.name_en})`;
+        const e1 = LANGUAGE_MODE === 'en' ? firstElement.word_en : firstElement.word_cn;
+        const e2 = LANGUAGE_MODE === 'en' ? secondElement.word_en : secondElement.word_cn;
+        const both_e1 = ` (${firstElement.word_en})`;
+        const both_e2 = ` (${secondElement.word_en})`;
         
         const userPrompt = `输入：\n${e1}${LANGUAGE_MODE === 'both' ? both_e1 : ''} + ${e2}${LANGUAGE_MODE === 'both' ? both_e2 : ''}`;
         messages.push({ role: 'user', content: userPrompt });
@@ -609,9 +609,9 @@ async function startServer() {
             const parsed = JSON.parse(content);
             
             // 验证结果
-            if (!parsed.name_cn && !parsed.name_en && !parsed.name) {
+            if (!parsed.word_cn && !parsed.word_en && !parsed.word) {
                 console.error('AI返回格式错误:', parsed);
-                return { name_cn: null, name_en: null, emoji: '' };
+                return { word_cn: null, word_en: null, emoji: '' };
             }
             
             // 确保只有一个emoji
@@ -622,18 +622,18 @@ async function startServer() {
                 emoji = emojiMatch[0];
             }
 
-            let name_cn = parsed.name_cn;
-            let name_en = parsed.name_en;
+            let word_cn = parsed.word_cn;
+            let word_en = parsed.word_en;
 
             if (LANGUAGE_MODE === 'cn') {
-                name_cn = parsed.name;
+                word_cn = parsed.word;
             } else if (LANGUAGE_MODE === 'en') {
-                name_en = parsed.name;
+                word_en = parsed.word;
             }
 
             return {
-                name_cn,
-                name_en,
+                word_cn,
+                word_en,
                 emoji: emoji
             };
         } catch (error) {
@@ -744,11 +744,11 @@ async function startServer() {
             const discovery = await db.get(`
                 SELECT 
                     fd.*,
-                    e1.name_cn as first_element_cn,
-                    e1.name_en as first_element_en,
+                    e1.word_cn as first_element_cn,
+                    e1.word_en as first_element_en,
                     e1.emoji as first_element_emoji,
-                    e2.name_cn as second_element_cn,
-                    e2.name_en as second_element_en,
+                    e2.word_cn as second_element_cn,
+                    e2.word_en as second_element_en,
                     e2.emoji as second_element_emoji
                 FROM first_discoveries fd
                 LEFT JOIN elements e1 ON fd.first_element_id = e1.id

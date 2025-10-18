@@ -10,8 +10,8 @@ import request from '@/utils/request'
 const props = defineProps<{
   id: string
   emoji: string
-  name_cn: string
-  name_en: string
+  word_cn: string
+  word_en: string
   discoverer_name?: string
 }>()
 
@@ -21,8 +21,8 @@ const [collect, drag, preview] = useDrag(() => ({
   type: ItemTypes.BOX,
   item: { 
     elementId: props.id,
-    name_cn: props.name_cn,
-    name_en: props.name_en,
+    word_cn: props.word_cn,
+    word_en: props.word_en,
     emoji: props.emoji,
     discoverer_name: props.discoverer_name
   },
@@ -68,8 +68,8 @@ function handleClick(event: MouseEvent) {
   // 添加元素到工作区
   boxesStore.addBox({
     elementId: props.id,
-    name_cn: props.name_cn,
-    name_en: props.name_en,
+    word_cn: props.word_cn,
+    word_en: props.word_en,
     emoji: props.emoji,
     discoverer_name: props.discoverer_name,
     left: randomLeft,
@@ -163,8 +163,8 @@ function handleTouchEnd() {
       <ItemCard 
         :id="id"
         :element-id="id"
-        :name_cn="name_cn"
-        :name_en="name_en"
+        :word_cn="word_cn"
+        :word_en="word_en"
         :emoji="emoji"
         :discoverer_name="discoverer_name"
         size="small"
@@ -178,7 +178,7 @@ function handleTouchEnd() {
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-2xl font-semibold flex items-center space-x-2">
             <span>{{ elementDetails?.element?.emoji }}</span>
-            <span>{{ elementDetails?.element?.name_cn }}</span>
+            <span>{{ elementDetails?.element?.word_cn }}</span>
           </h3>
           <button @click="showDetails = false" class="text-gray-400 hover:text-gray-600">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -190,7 +190,7 @@ function handleTouchEnd() {
         <div class="space-y-3">
           <div class="bg-gray-50 rounded-lg p-3">
             <div class="text-xs text-gray-500 mb-1">英文标签</div>
-            <div class="font-semibold text-gray-800">{{ elementDetails?.element?.name_en }}</div>
+            <div class="font-semibold text-gray-800">{{ elementDetails?.element?.word_en }}</div>
           </div>
           
           <div v-if="elementDetails?.element?.discoverer_name" class="bg-gray-50 rounded-lg p-3">

@@ -105,7 +105,7 @@ opencraft/
 - **表结构**:
   ```sql
   users: id, username, token, created_at
-  elements: id, name_cn, name_en, emoji, discoverer_name, created_at
+  elements: id, word_cn, word_en, emoji, discoverer_name, created_at
   first_discoveries: element_id, recipe_a, recipe_b, discoverer_name, created_at
   ```
 

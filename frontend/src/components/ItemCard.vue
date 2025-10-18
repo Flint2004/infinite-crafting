@@ -11,8 +11,8 @@ import {twMerge} from "tailwind-merge";
 import {ref} from "vue";
 
 const props = defineProps<{
-  name_cn: string;
-  name_en: string;
+  word_cn: string;
+  word_en: string;
   emoji: string;
   elementId: string;
   id: string;
@@ -58,8 +58,8 @@ function duplicateElement() {
     
     addBox({
       elementId: currentBox.elementId,
-      name_cn: currentBox.name_cn,
-      name_en: currentBox.name_en,
+      word_cn: currentBox.word_cn,
+      word_en: currentBox.word_en,
       emoji: currentBox.emoji,
       discoverer_name: currentBox.discoverer_name,
       left: currentBox.left + offsetX,
@@ -130,8 +130,8 @@ const [, drop] = useDrop(() => ({
           
           addBox({
             elementId: element.id,
-            name_cn: element.name_cn,
-            name_en: element.name_en,
+            word_cn: element.word_cn,
+            word_en: element.word_en,
             emoji: element.emoji,
             discoverer_name: element.discoverer_name,
             left: store.boxes[props.id].left,
@@ -142,8 +142,8 @@ const [, drop] = useDrop(() => ({
           if(!resources.value.find((resource) => resource.id === element.id)){
             addResource({
               id: element.id,
-              name_cn: element.name_cn,
-              name_en: element.name_en,
+              word_cn: element.word_cn,
+              word_en: element.word_en,
               emoji: element.emoji,
               discoverer_name: element.discoverer_name
             })
@@ -151,7 +151,7 @@ const [, drop] = useDrop(() => ({
           
           // 如果是首次发现，显示提示
           if (response.data.isNew) {
-            console.log(`🎉 首次发现新元素: ${element.name_cn}!`)
+            console.log(`🎉 首次发现新元素: ${element.word_cn}!`)
           }
           
           removeBox(props.id);
@@ -200,7 +200,7 @@ const [, drop] = useDrop(() => ({
         {{ emoji }}
       </span>
       <span style="-webkit-user-drag: none; user-select: none;">
-        {{ name_cn }}
+        {{ word_cn }}
       </span>
     </div>
     
@@ -210,7 +210,7 @@ const [, drop] = useDrop(() => ({
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-2xl font-semibold flex items-center space-x-2">
             <span>{{ elementDetails?.element?.emoji }}</span>
-            <span>{{ elementDetails?.element?.name_cn }}</span>
+            <span>{{ elementDetails?.element?.word_cn }}</span>
           </h3>
           <button @click="showDetails = false" class="text-gray-400 hover:text-gray-600">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -222,7 +222,7 @@ const [, drop] = useDrop(() => ({
         <div class="space-y-3">
           <div class="bg-gray-50 rounded-lg p-3">
             <div class="text-xs text-gray-500 mb-1">英文标签</div>
-            <div class="font-semibold text-gray-800">{{ elementDetails?.element?.name_en }}</div>
+            <div class="font-semibold text-gray-800">{{ elementDetails?.element?.word_en }}</div>
           </div>
           
           <div v-if="elementDetails?.element?.discoverer_name" class="bg-gray-50 rounded-lg p-3">

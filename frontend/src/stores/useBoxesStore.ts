@@ -7,8 +7,8 @@ export interface BoxStoreEntry {
     top: number
     left: number
     elementId: string
-    name_cn: string
-    name_en: string
+    word_cn: string
+    word_en: string
     emoji: string
     discoverer_name?: string
     loading?: boolean

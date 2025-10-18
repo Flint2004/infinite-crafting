@@ -15,8 +15,8 @@ const searchTerm = ref('')
 
 const filteredResources = computed(() => {
   return resources.value.filter((resource) => {
-    return resource.name_cn.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-           resource.name_en.toLowerCase().includes(searchTerm.value.toLowerCase())
+    return resource.word_cn.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
+           resource.word_en.toLowerCase().includes(searchTerm.value.toLowerCase())
   })
 })
 
@@ -49,8 +49,8 @@ const [collectDrop, drop] = useDrop(() => ({
           v-for="resource in filteredResources" 
           :key="resource.id" 
           :id="resource.id"
-          :name_cn="resource.name_cn"
-          :name_en="resource.name_en"
+          :word_cn="resource.word_cn"
+          :word_en="resource.word_en"
           :emoji="resource.emoji"
           :discoverer_name="resource.discoverer_name"
         />

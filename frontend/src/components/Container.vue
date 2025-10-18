@@ -17,8 +17,8 @@ const moveBox = (
   left: number, 
   top: number, 
   elementId?: string, 
-  name_cn?: string, 
-  name_en?: string, 
+  word_cn?: string, 
+  word_en?: string, 
   emoji?: string, 
   discoverer_name?: string
 ) => {
@@ -30,8 +30,8 @@ const moveBox = (
       top, 
       left, 
       elementId, 
-      name_cn, 
-      name_en, 
+      word_cn, 
+      word_en, 
       emoji, 
       discoverer_name
     }
@@ -63,8 +63,8 @@ const [, drop] = useDrop(() => ({
           left, 
           top, 
           item.elementId, 
-          item.name_cn, 
-          item.name_en, 
+          item.word_cn, 
+          item.word_en, 
           item.emoji, 
           item.discoverer_name
         )
@@ -92,8 +92,8 @@ const [, drop] = useDrop(() => ({
               :top="value.top"
               :loading="value.loading"
               :element-id="value.elementId"
-              :name_cn="value.name_cn"
-              :name_en="value.name_en"
+              :word_cn="value.word_cn"
+              :word_en="value.word_en"
               :emoji="value.emoji"
               :discoverer_name="value.discoverer_name"
           >
@@ -101,8 +101,8 @@ const [, drop] = useDrop(() => ({
               :size="'large'"
               :id="key" 
               :element-id="value.elementId"
-              :name_cn="value.name_cn"
-              :name_en="value.name_en"
+              :word_cn="value.word_cn"
+              :word_en="value.word_en"
               :emoji="value.emoji"
               :discoverer_name="value.discoverer_name"
             />

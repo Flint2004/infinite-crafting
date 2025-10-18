@@ -4,8 +4,8 @@ import {useLocalStorage} from "@vueuse/core";
 
 export interface ResourceStoreEntry {
     id: string
-    name_cn: string
-    name_en: string
+    word_cn: string
+    word_en: string
     emoji: string
     discoverer_name?: string
 }

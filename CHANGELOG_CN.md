@@ -45,8 +45,8 @@
    // 新结构
    { 
      id: string,
-     name_cn: string,
-     name_en: string,
+     word_cn: string,
+     word_en: string,
      emoji: string,
      discoverer_name?: string
    }
@@ -122,8 +122,8 @@ Headers: { Authorization: "Bearer xxx" }
   "success": true,
   "element": {
     "id": "xxx",
-    "name_cn": "钢铁",
-    "name_en": "Steel",
+    "word_cn": "钢铁",
+    "word_en": "Steel",
     "emoji": "🔩",
     "discoverer_name": "玩家名"
   },

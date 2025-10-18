@@ -112,8 +112,8 @@ npm run dev
 ### 元素表 (elements)
 ```sql
 - id: 元素唯一ID
-- name_cn: 中文名称
-- name_en: 英文名称
+- word_cn: 中文名称
+- word_en: 英文名称
 - emoji: 表情符号
 - discoverer_id: 发现者ID
 - discoverer_name: 发现者名称
@@ -194,7 +194,7 @@ npm run dev
 编辑 `server/index.js` 中的 `baseElements` 数组：
 ```javascript
 const baseElements = [
-    { id: 'base_xxx', name_cn: '元素名', name_en: 'Element', emoji: '🌟' }
+    { id: 'base_xxx', word_cn: '元素名', word_en: 'Element', emoji: '🌟' }
 ]
 ```
 

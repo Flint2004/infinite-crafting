@@ -39,8 +39,8 @@ function getItemStyles() {
     <ItemCard 
       :id="item.id || item.elementId || ''"
       :element-id="item.elementId || item.id || ''"
-      :name_cn="item.name_cn || ''"
-      :name_en="item.name_en || ''"
+      :word_cn="item.word_cn || ''"
+      :word_en="item.word_en || ''"
       :emoji="item.emoji || ''"
       :discoverer_name="item.discoverer_name"
       :size="item.id && item.left !== undefined ? 'large' : 'small'"

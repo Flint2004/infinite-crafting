@@ -10,8 +10,8 @@ const props = defineProps<{
   hideSourceOnDrag?: boolean
   loading?: boolean
   elementId?: string
-  name_cn?: string
-  name_en?: string
+  word_cn?: string
+  word_en?: string
   emoji?: string
   discoverer_name?: string
 }>()
@@ -23,8 +23,8 @@ const [collect, drag, preview] = useDrag(() => ({
     left: props.left, 
     top: props.top,
     elementId: props.elementId,
-    name_cn: props.name_cn,
-    name_en: props.name_en,
+    word_cn: props.word_cn,
+    word_en: props.word_en,
     emoji: props.emoji,
     discoverer_name: props.discoverer_name
   },
