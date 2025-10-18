@@ -1,95 +1,17 @@
 <script setup lang="ts">
-import {RouterLink, RouterView, useRouter} from 'vue-router'
-import { ref } from 'vue'
+import { onMounted } from 'vue'
+import { RouterView } from 'vue-router'
 import { useUserStore } from '@/stores/useUserStore'
-import { useResourcesStore } from '@/stores/useResourcesStore'
-import { useBoxesStore } from '@/stores/useBoxesStore'
+import { useConfigStore } from '@/stores/useConfigStore'
+import CustomDragLayer from '@/components/CustomDragLayer.vue'
 
-const router = useRouter()
 const userStore = useUserStore()
-const resourcesStore = useResourcesStore()
-const boxesStore = useBoxesStore()
+const configStore = useConfigStore()
 
-const showUserMenu = ref(false)
-const showLogoutModal = ref(false)
-
-function showLogoutDialog() {
-  showUserMenu.value = false
-  showLogoutModal.value = true
-}
-
-function onlyLogout() {
-  // 只清除用户信息，保留所有数据（首次发现人信息保留在元素数据中）
-  userStore.clearUser()
-  showLogoutModal.value = false
-  router.push('/login')
-}
-
-function logoutAndClearWorkArea() {
-  // 清除用户信息和工作区
-  userStore.clearUser()
-  boxesStore.clearBoxes()
-  showLogoutModal.value = false
-  router.push('/login')
-}
-
-function logoutAndClearElements() {
-  // 清除用户信息和元素列表
-  userStore.clearUser()
-  resourcesStore.clearResources()
-  showLogoutModal.value = false
-  router.push('/login')
-}
-
-function logoutAndClearAll() {
-  // 清除所有数据
-  userStore.clearUser()
-  resourcesStore.clearResources()
-  boxesStore.clearBoxes()
-  showLogoutModal.value = false
-  router.push('/login')
-}
-
-function cancelLogout() {
-  showLogoutModal.value = false
-}
-
-async function copyToken() {
-  if (userStore.user?.token) {
-    try {
-      // 尝试使用现代 Clipboard API
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(userStore.user.token)
-        alert('Token已复制到剪贴板！')
-      } else {
-        // 降级方案：使用传统的 document.execCommand
-        const textArea = document.createElement('textarea')
-        textArea.value = userStore.user.token
-        textArea.style.position = 'fixed'
-        textArea.style.left = '-999999px'
-        textArea.style.top = '-999999px'
-        document.body.appendChild(textArea)
-        textArea.focus()
-        textArea.select()
-        try {
-          const successful = document.execCommand('copy')
-          if (successful) {
-            alert('Token已复制到剪贴板！')
-          } else {
-            alert('复制失败，请手动复制')
-          }
-        } catch (err) {
-          console.error('复制失败:', err)
-          alert('复制失败，请手动复制')
-        }
-        document.body.removeChild(textArea)
-      }
-    } catch (err) {
-      console.error('复制失败:', err)
-      alert('复制失败，请手动复制')
-    }
-  }
-}
+onMounted(() => {
+  userStore.initializeUser()
+  configStore.fetchConfig()
+})
 </script>
 
 <template>

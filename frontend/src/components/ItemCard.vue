@@ -9,6 +9,8 @@ import {useUserStore} from "@/stores/useUserStore";
 import {storeToRefs} from "pinia";
 import {twMerge} from "tailwind-merge";
 import {ref} from "vue";
+import type { Element } from './interfaces'
+import { useConfigStore } from '@/stores/useConfigStore'
 
 const props = defineProps<{
   name_cn: string;
