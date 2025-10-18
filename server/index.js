@@ -876,6 +876,7 @@ async function startServer() {
         console.log(`✅ 服务器启动成功`)
         console.log(`   端口: ${PORT}`)
         console.log(`   AI模式: ${AI_MODE === 'local' ? '本地模型' : 'API调用'}`)
+        console.log(`   语言模式: ${LANGUAGE_MODE}`)
         
         if (AI_MODE === 'local') {
             console.log(`   模型路径: ${LOCAL_MODEL_PATH}`)
