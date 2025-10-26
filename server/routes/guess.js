@@ -103,7 +103,7 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                 );
                 
                 // 只有完成的用户才能看到答案和原始内容
-                const responseData: any = {
+                const responseData = {
                     question: {
                         id: question.id,
                         seedString: question.seed_string,
