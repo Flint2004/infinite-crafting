@@ -93,29 +93,31 @@ async function copyToken() {
 </script>
 
 <template>
-  <header v-if="userStore.isLoggedIn()" class="border-b border-gray-300 py-4 px-4 fixed z-20 w-full bg-white shadow-sm select-none">
+  <header v-if="userStore.isLoggedIn()" class="border-b border-gray-300 py-4 px-4 fixed z-20 w-full bg-white shadow-sm">
     <div class="flex w-full px-4 mx-auto justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <div class="border-2 border-gray-200 shadow-sm px-2.5 rounded-lg py-1 text-gray-500 text-xl font-semibold">
+      <div class="flex items-center space-x-4">
+        <div class="border-2 border-gray-200 shadow-sm px-2.5 rounded-lg py-1 text-gray-500 text-xl font-semibold select-none">
           <span class="text-sky-400">Open</span>Craft
         </div>
-        <div class="flex items-center space-x-2 ml-4">
+        <div class="flex items-center space-x-2">
           <button
             @click="router.push('/')"
             :class="router.currentRoute.value.path === '/' ? 'bg-blue-600' : 'bg-blue-500'"
-            class="px-3 py-1.5 text-white text-sm rounded-lg hover:bg-blue-600 transition"
+            class="px-3 py-1.5 text-white text-sm rounded-lg hover:bg-blue-600 transition cursor-pointer"
           >
             🎮 合成游戏
           </button>
           <button
             @click="router.push('/guess')"
             :class="router.currentRoute.value.path === '/guess' ? 'bg-purple-600' : 'bg-purple-500'"
-            class="px-3 py-1.5 text-white text-sm rounded-lg hover:bg-purple-600 transition"
+            class="px-3 py-1.5 text-white text-sm rounded-lg hover:bg-purple-600 transition cursor-pointer"
           >
             🎯 猜百科
           </button>
         </div>
-        <div class="relative">
+      </div>
+      <div class="flex items-center space-x-3">
+        <div class="relative select-none">
           <button
             @click="showUserMenu = !showUserMenu"
             class="text-sm text-gray-500 hover:text-gray-700 transition flex items-center space-x-1"
