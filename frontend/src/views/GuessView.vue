@@ -109,9 +109,9 @@ async function startGame() {
       guesses.value = response.data.guesses.map((g: any) => ({
         character: g.character,
         isInTitle: g.is_in_title === 1,
-        titlePositions: g.position ? g.position.split(',').map(Number) : [],
-        isInContent: g.content_position && g.content_position.length > 0,
-        contentPositions: g.content_position ? g.content_position.split(',').map(Number) : []
+        titlePositions: Array.isArray(g.position) ? g.position : (g.position ? g.position.split(',').filter((p: string) => p).map(Number) : []),
+        isInContent: g.content_position && (Array.isArray(g.content_position) ? g.content_position.length > 0 : g.content_position.length > 0),
+        contentPositions: Array.isArray(g.content_position) ? g.content_position : (g.content_position ? g.content_position.split(',').filter((p: string) => p).map(Number) : [])
       }))
     } else {
       guesses.value = []

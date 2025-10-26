@@ -73,13 +73,22 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                 }
                 
                 // 获取用户对该题目的猜测记录
-                const guesses = await db.all(
+                const guessesRaw = await db.all(
                     `SELECT character, position, content_position, is_in_title, created_at 
                      FROM guess_records 
                      WHERE user_id = ? AND question_id = ? 
                      ORDER BY created_at ASC`,
                     [user.id, question.id]
                 );
+                
+                // 转换字符串位置为数组
+                const guesses = guessesRaw.map(g => ({
+                    character: g.character,
+                    position: g.position ? g.position.split(',').filter(p => p).map(Number) : [],
+                    content_position: g.content_position ? g.content_position.split(',').filter(p => p).map(Number) : [],
+                    is_in_title: g.is_in_title,
+                    created_at: g.created_at
+                }));
                 
                 // 遮挡内容：除标点符号外全部替换为 ■
                 const maskedTitle = question.title.replace(/[^\u3000-\u303F\uFF00-\uFFEF]/g, '■');
