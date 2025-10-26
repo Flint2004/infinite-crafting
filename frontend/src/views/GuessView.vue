@@ -10,7 +10,13 @@ const router = useRouter()
 // 游戏状态
 const seedString = ref('')
 const question = ref<any>(null)
-const guesses = ref<Array<{ character: string; isInTitle: boolean; positions: number[] }>>([])
+const guesses = ref<Array<{ 
+  character: string; 
+  isInTitle: boolean; 
+  titlePositions: number[];
+  isInContent: boolean;
+  contentPositions: number[];
+}>>([])
 const currentInput = ref('')
 const isLoading = ref(false)
 const errorMessage = ref('')
@@ -23,8 +29,8 @@ const showHistory = ref(false)
 
 // 统计信息
 const totalGuesses = computed(() => guesses.value.length)
-const correctGuesses = computed(() => guesses.value.filter(g => g.isInTitle).length)
-const wrongGuesses = computed(() => guesses.value.filter(g => !g.isInTitle))
+const correctGuesses = computed(() => guesses.value.filter(g => g.isInTitle || g.isInContent).length)
+const wrongGuesses = computed(() => guesses.value.filter(g => !g.isInTitle && !g.isInContent))
 
 // 显示的标题（根据已猜测的字符显示）
 const displayedTitle = computed(() => {
@@ -55,7 +61,7 @@ const displayedDescription = computed(() => {
   
   const description = question.value.description
   const guessedChars = new Set(
-    guesses.value.filter(g => g.isInTitle).map(g => g.character)
+    guesses.value.filter(g => g.isInContent).map(g => g.character)
   )
   
   return description.split('').map(char => {
@@ -63,9 +69,9 @@ const displayedDescription = computed(() => {
     if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
       return char
     }
-    // 已猜测的字符显示，并加绿色背景
+    // 已猜测的字符显示，并加蓝色背景（区别于标题的绿色）
     if (guessedChars.has(char)) {
-      return `<span class="bg-green-500 text-white px-1 mx-0.5 rounded">${char}</span>`
+      return `<span class="bg-blue-500 text-white px-1 mx-0.5 rounded">${char}</span>`
     }
     // 未猜测的显示方块
     return '<span class="text-gray-400">■</span>'
@@ -91,7 +97,9 @@ async function startGame() {
       guesses.value = response.data.guesses.map((g: any) => ({
         character: g.character,
         isInTitle: g.is_in_title === 1,
-        positions: g.position ? g.position.split(',').map(Number) : []
+        titlePositions: g.position ? g.position.split(',').map(Number) : [],
+        isInContent: g.content_position && g.content_position.length > 0,
+        contentPositions: g.content_position ? g.content_position.split(',').map(Number) : []
       }))
     } else {
       guesses.value = []
@@ -139,7 +147,9 @@ async function submitGuess() {
     guesses.value.push({
       character: response.data.character,
       isInTitle: response.data.isInTitle,
-      positions: response.data.positions
+      titlePositions: response.data.titlePositions,
+      isInContent: response.data.isInContent,
+      contentPositions: response.data.contentPositions
     })
     
     currentInput.value = ''
@@ -295,16 +305,22 @@ onMounted(() => {
 
         <!-- 题目显示 -->
         <div class="bg-white rounded-lg shadow-lg p-6">
-          <div class="mb-4">
-            <h3 class="text-sm text-gray-600 mb-2">题目标题：</h3>
+          <div class="mb-4 pb-4 border-b">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-sm text-gray-600">题目标题：</h3>
+              <span class="text-xs text-green-600">🟢 绿色 = 标题中的字</span>
+            </div>
             <div 
-              class="text-2xl font-bold mb-4 leading-relaxed"
+              class="text-2xl font-bold leading-relaxed"
               v-html="displayedTitle"
             ></div>
           </div>
           
           <div>
-            <h3 class="text-sm text-gray-600 mb-2">百科描述：</h3>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-sm text-gray-600">百科描述：</h3>
+              <span class="text-xs text-blue-600">🔵 蓝色 = 内容中的字</span>
+            </div>
             <div 
               class="text-base leading-relaxed text-gray-700"
               v-html="displayedDescription"
@@ -350,17 +366,51 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- 错误的字符 -->
-        <div v-if="wrongGuesses.length > 0" class="bg-white rounded-lg shadow-lg p-6">
-          <h3 class="text-lg font-bold mb-4 text-gray-800">❌ 不在标题中的字符：</h3>
-          <div class="flex flex-wrap gap-2">
-            <span
-              v-for="guess in wrongGuesses"
-              :key="guess.character"
-              class="px-4 py-2 bg-red-100 text-red-700 rounded-lg text-lg font-medium"
-            >
-              {{ guess.character }}
-            </span>
+        <!-- 猜对的字符统计 -->
+        <div v-if="guesses.length > 0" class="bg-white rounded-lg shadow-lg p-6">
+          <h3 class="text-lg font-bold mb-4 text-gray-800">📊 猜测统计</h3>
+          <div class="space-y-4">
+            <!-- 标题中的字符 -->
+            <div v-if="guesses.filter(g => g.isInTitle).length > 0">
+              <h4 class="text-sm font-semibold text-green-700 mb-2">✅ 在标题中：</h4>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="guess in guesses.filter(g => g.isInTitle)"
+                  :key="'title-' + guess.character"
+                  class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-base font-medium"
+                >
+                  {{ guess.character }}
+                </span>
+              </div>
+            </div>
+            
+            <!-- 内容中的字符 -->
+            <div v-if="guesses.filter(g => g.isInContent && !g.isInTitle).length > 0">
+              <h4 class="text-sm font-semibold text-blue-700 mb-2">💡 仅在内容中：</h4>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="guess in guesses.filter(g => g.isInContent && !g.isInTitle)"
+                  :key="'content-' + guess.character"
+                  class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-base font-medium"
+                >
+                  {{ guess.character }}
+                </span>
+              </div>
+            </div>
+            
+            <!-- 错误的字符 -->
+            <div v-if="wrongGuesses.length > 0">
+              <h4 class="text-sm font-semibold text-red-700 mb-2">❌ 都不在其中：</h4>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="guess in wrongGuesses"
+                  :key="'wrong-' + guess.character"
+                  class="px-3 py-1 bg-red-100 text-red-700 rounded-lg text-base font-medium"
+                >
+                  {{ guess.character }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 

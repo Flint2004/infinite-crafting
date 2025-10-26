@@ -74,7 +74,7 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                 
                 // 获取用户对该题目的猜测记录
                 const guesses = await db.all(
-                    `SELECT character, position, is_in_title, created_at 
+                    `SELECT character, position, content_position, is_in_title, created_at 
                      FROM guess_records 
                      WHERE user_id = ? AND question_id = ? 
                      ORDER BY created_at ASC`,
@@ -154,24 +154,35 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                     return reply.code(400).send({ error: '该字符已经猜过了' });
                 }
                 
-                // 检查字符是否在标题中
-                const positions = [];
+                // 检查字符是否在标题和内容中
+                const titlePositions = [];
+                const contentPositions = [];
                 const isInTitle = question.title.includes(character);
+                const isInContent = question.description.includes(character);
                 
                 if (isInTitle) {
-                    // 找出所有位置
+                    // 找出标题中所有位置
                     for (let i = 0; i < question.title.length; i++) {
                         if (question.title[i] === character) {
-                            positions.push(i);
+                            titlePositions.push(i);
                         }
                     }
                 }
                 
-                // 记录猜测
+                if (isInContent) {
+                    // 找出内容中所有位置
+                    for (let i = 0; i < question.description.length; i++) {
+                        if (question.description[i] === character) {
+                            contentPositions.push(i);
+                        }
+                    }
+                }
+                
+                // 记录猜测（position存标题位置，content_position存内容位置）
                 await db.run(
-                    `INSERT INTO guess_records (user_id, question_id, character, is_in_title, position, created_at) 
-                     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-                    [user.id, questionId, character, isInTitle ? 1 : 0, positions.join(',')]
+                    `INSERT INTO guess_records (user_id, question_id, character, is_in_title, position, content_position, created_at) 
+                     VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+                    [user.id, questionId, character, isInTitle ? 1 : 0, titlePositions.join(','), contentPositions.join(',')]
                 );
                 
                 // 检查是否完成（标题所有字符都猜对）
@@ -211,7 +222,9 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                     success: true,
                     character: character,
                     isInTitle: isInTitle,
-                    positions: positions,
+                    titlePositions: titlePositions,
+                    isInContent: isInContent,
+                    contentPositions: contentPositions,
                     isCompleted: isCompleted
                 };
                 
@@ -265,33 +278,47 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                         results.push({
                             character: character,
                             isInTitle: existing.is_in_title === 1,
-                            positions: existing.position ? existing.position.split(',').map(Number) : []
+                            titlePositions: existing.position ? existing.position.split(',').map(Number) : [],
+                            isInContent: existing.content_position && existing.content_position.length > 0,
+                            contentPositions: existing.content_position ? existing.content_position.split(',').map(Number) : []
                         });
                         continue;
                     }
                     
                     // 新的猜测
-                    const positions = [];
+                    const titlePositions = [];
+                    const contentPositions = [];
                     const isInTitle = question.title.includes(character);
+                    const isInContent = question.description.includes(character);
                     
                     if (isInTitle) {
                         for (let i = 0; i < question.title.length; i++) {
                             if (question.title[i] === character) {
-                                positions.push(i);
+                                titlePositions.push(i);
+                            }
+                        }
+                    }
+                    
+                    if (isInContent) {
+                        for (let i = 0; i < question.description.length; i++) {
+                            if (question.description[i] === character) {
+                                contentPositions.push(i);
                             }
                         }
                     }
                     
                     await db.run(
-                        `INSERT INTO guess_records (user_id, question_id, character, is_in_title, position, created_at) 
-                         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-                        [user.id, questionId, character, isInTitle ? 1 : 0, positions.join(',')]
+                        `INSERT INTO guess_records (user_id, question_id, character, is_in_title, position, content_position, created_at) 
+                         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+                        [user.id, questionId, character, isInTitle ? 1 : 0, titlePositions.join(','), contentPositions.join(',')]
                     );
                     
                     results.push({
                         character: character,
                         isInTitle: isInTitle,
-                        positions: positions
+                        titlePositions: titlePositions,
+                        isInContent: isInContent,
+                        contentPositions: contentPositions
                     });
                 }
                 

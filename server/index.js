@@ -162,6 +162,7 @@ async function initializeDatabase() {
             character TEXT NOT NULL,
             is_in_title INTEGER DEFAULT 0,
             position TEXT DEFAULT '',
+            content_position TEXT DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (question_id) REFERENCES guess_questions(id),
