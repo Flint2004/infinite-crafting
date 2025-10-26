@@ -85,6 +85,12 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                 const maskedTitle = question.title.replace(/[^\u3000-\u303F\uFF00-\uFFEF]/g, '■');
                 const maskedDescription = question.description.replace(/[^\u3000-\u303F\uFF00-\uFFEF]/g, '■');
                 
+                // 检查用户是否已完成该题目
+                const userCompleted = await db.get(
+                    'SELECT * FROM guess_results WHERE user_id = ? AND question_id = ?',
+                    [user.id, question.id]
+                );
+                
                 // 获取排行榜（完成该题目的前10名）
                 const leaderboard = await db.all(
                     `SELECT u.username, gr.guess_count, gr.completed_at 
@@ -96,18 +102,27 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                     [question.id]
                 );
                 
-                return {
+                // 只有完成的用户才能看到答案和原始内容
+                const responseData: any = {
                     question: {
                         id: question.id,
                         seedString: question.seed_string,
                         title: maskedTitle,
                         description: maskedDescription,
-                        originalTitle: question.title, // 用于客户端检查完成状态
-                        originalDescription: question.description, // 用于客户端高亮显示
                     },
                     guesses: guesses,
-                    leaderboard: leaderboard
+                    leaderboard: leaderboard,
+                    isCompleted: !!userCompleted
                 };
+                
+                // 只有完成的用户才返回答案
+                if (userCompleted) {
+                    responseData.question.word = question.word;
+                    responseData.question.originalTitle = question.title;
+                    responseData.question.originalDescription = question.description;
+                }
+                
+                return responseData;
                 
             } catch (error) {
                 console.error('生成/获取题目失败:', error);
@@ -349,7 +364,9 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
             try {
                 const history = await db.all(
                     `SELECT 
-                        gq.id, gq.seed_string, gq.word, gq.title,
+                        gq.id, gq.seed_string, 
+                        CASE WHEN gr.guess_count IS NOT NULL THEN gq.word ELSE NULL END as word,
+                        CASE WHEN gr.guess_count IS NOT NULL THEN gq.title ELSE NULL END as title,
                         gr.guess_count, gr.completed_at,
                         (SELECT COUNT(*) FROM guess_records WHERE user_id = ? AND question_id = gq.id) as attempts
                      FROM guess_questions gq

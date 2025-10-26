@@ -36,10 +36,16 @@ const wrongGuesses = computed(() => guesses.value.filter(g => !g.isInTitle && !g
 const displayedTitle = computed(() => {
   if (!question.value) return ''
   
-  const title = question.value.originalTitle
+  // 如果已完成，使用原始标题；否则使用遮挡的标题
+  const title = question.value.originalTitle || question.value.title
   const guessedChars = new Set(
     guesses.value.filter(g => g.isInTitle).map(g => g.character)
   )
+  
+  // 如果没有原始标题（未完成），直接显示遮挡后的内容
+  if (!question.value.originalTitle) {
+    return title
+  }
   
   return title.split('').map(char => {
     // 标点符号直接显示
@@ -59,10 +65,16 @@ const displayedTitle = computed(() => {
 const displayedDescription = computed(() => {
   if (!question.value) return ''
   
-  const description = question.value.originalDescription // 使用原始内容
+  // 如果已完成，使用原始描述；否则使用遮挡的描述
+  const description = question.value.originalDescription || question.value.description
   const guessedChars = new Set(
     guesses.value.filter(g => g.isInContent).map(g => g.character)
   )
+  
+  // 如果没有原始描述（未完成），直接显示遮挡后的内容
+  if (!question.value.originalDescription) {
+    return description
+  }
   
   return description.split('').map(char => {
     // 标点符号直接显示
@@ -171,14 +183,19 @@ async function submitGuess() {
 function checkCompletion() {
   if (!question.value) return
   
-  const guessedChars = new Set(
-    guesses.value.filter(g => g.isInTitle).map(g => g.character)
-  )
-  const titleChars = new Set(
-    question.value.originalTitle.split('').filter((c: string) => /[\u4e00-\u9fff]/.test(c))
-  )
-  
-  isCompleted.value = Array.from(titleChars).every(c => guessedChars.has(c))
+  // 如果有 originalTitle，说明已完成
+  if (question.value.originalTitle) {
+    const guessedChars = new Set(
+      guesses.value.filter(g => g.isInTitle).map(g => g.character)
+    )
+    const titleChars = new Set(
+      question.value.originalTitle.split('').filter((c: string) => /[\u4e00-\u9fff]/.test(c))
+    )
+    
+    isCompleted.value = Array.from(titleChars).every(c => guessedChars.has(c))
+  } else {
+    isCompleted.value = false
+  }
 }
 
 // 加载历史记录

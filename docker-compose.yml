@@ -8,6 +8,7 @@ services:
     ports:
       - "3000:3000"
     environment:
+      - TZ=Asia/Shanghai
       - AI_MODE=${AI_MODE:-api}
       - SILICONFLOW_API_KEY=${SILICONFLOW_API_KEY}
       - SILICONFLOW_API_URL=${SILICONFLOW_API_URL:-https://api.siliconflow.cn/v1/chat/completions}
@@ -52,6 +53,7 @@ services:
     depends_on:
       - backend
     environment:
+      - TZ=Asia/Shanghai
       - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://backend:3000}
       - VITE_APP_TITLE=${VITE_APP_TITLE:-OpenCraft}
     networks:
