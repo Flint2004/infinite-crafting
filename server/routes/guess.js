@@ -103,6 +103,7 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                         title: maskedTitle,
                         description: maskedDescription,
                         originalTitle: question.title, // 用于客户端检查完成状态
+                        originalDescription: question.description, // 用于客户端高亮显示
                     },
                     guesses: guesses,
                     leaderboard: leaderboard

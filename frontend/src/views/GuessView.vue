@@ -59,7 +59,7 @@ const displayedTitle = computed(() => {
 const displayedDescription = computed(() => {
   if (!question.value) return ''
   
-  const description = question.value.description
+  const description = question.value.originalDescription // 使用原始内容
   const guessedChars = new Set(
     guesses.value.filter(g => g.isInContent).map(g => g.character)
   )
