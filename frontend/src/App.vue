@@ -100,20 +100,20 @@ async function copyToken() {
           <span class="text-sky-400">Open</span>Craft
         </div>
         <div class="flex items-center space-x-2">
-          <button
-            @click="router.push('/')"
-            :class="router.currentRoute.value.path === '/' ? 'bg-blue-600' : 'bg-blue-500'"
-            class="px-3 py-1.5 text-white text-sm rounded-lg hover:bg-blue-600 transition cursor-pointer"
+          <RouterLink
+            to="/"
+            :class="$route.path === '/' ? 'bg-blue-600' : 'bg-blue-500'"
+            class="px-3 py-1.5 text-white text-sm rounded-lg hover:bg-blue-600 transition cursor-pointer inline-block"
           >
             🎮 合成游戏
-          </button>
-          <button
-            @click="router.push('/guess')"
-            :class="router.currentRoute.value.path === '/guess' ? 'bg-purple-600' : 'bg-purple-500'"
-            class="px-3 py-1.5 text-white text-sm rounded-lg hover:bg-purple-600 transition cursor-pointer"
+          </RouterLink>
+          <RouterLink
+            to="/guess"
+            :class="$route.path === '/guess' ? 'bg-purple-600' : 'bg-purple-500'"
+            class="px-3 py-1.5 text-white text-sm rounded-lg hover:bg-purple-600 transition cursor-pointer inline-block"
           >
             🎯 猜百科
-          </button>
+          </RouterLink>
         </div>
       </div>
       <div class="flex items-center space-x-3">
