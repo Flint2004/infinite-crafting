@@ -99,6 +99,22 @@ async function copyToken() {
         <div class="border-2 border-gray-200 shadow-sm px-2.5 rounded-lg py-1 text-gray-500 text-xl font-semibold">
           <span class="text-sky-400">Open</span>Craft
         </div>
+        <div class="flex items-center space-x-2 ml-4">
+          <button
+            @click="router.push('/')"
+            :class="router.currentRoute.value.path === '/' ? 'bg-blue-600' : 'bg-blue-500'"
+            class="px-3 py-1.5 text-white text-sm rounded-lg hover:bg-blue-600 transition"
+          >
+            🎮 合成游戏
+          </button>
+          <button
+            @click="router.push('/guess')"
+            :class="router.currentRoute.value.path === '/guess' ? 'bg-purple-600' : 'bg-purple-500'"
+            class="px-3 py-1.5 text-white text-sm rounded-lg hover:bg-purple-600 transition"
+          >
+            🎯 猜百科
+          </button>
+        </div>
         <div class="relative">
           <button
             @click="showUserMenu = !showUserMenu"

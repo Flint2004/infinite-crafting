@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
+import GuessView from '../views/GuessView.vue'
 import { useUserStore } from '@/stores/useUserStore'
 
 const router = createRouter({
@@ -16,6 +17,12 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/guess',
+      name: 'guess',
+      component: GuessView,
       meta: { requiresAuth: true }
     },
     {
