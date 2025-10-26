@@ -204,14 +204,13 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
-  if (!userStore.token) {
-    router.push('/login')
-  }
+  // 路由守卫已经处理了认证，这里不需要再检查
+  console.log('GuessView mounted, user:', userStore.user)
 })
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+  <div class="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4 pt-24">
     <div class="max-w-4xl mx-auto">
       <!-- 标题栏 -->
       <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
