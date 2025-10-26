@@ -36,27 +36,44 @@ const wrongGuesses = computed(() => guesses.value.filter(g => !g.isInTitle && !g
 const displayedTitle = computed(() => {
   if (!question.value) return ''
   
-  // 如果已完成，使用原始标题；否则使用遮挡的标题
-  const title = question.value.originalTitle || question.value.title
-  const guessedChars = new Set(
-    guesses.value.filter(g => g.isInTitle).map(g => g.character)
-  )
+  const title = question.value.title
   
-  // 如果没有原始标题（未完成），直接显示遮挡后的内容
-  if (!question.value.originalTitle) {
-    return title
+  // 如果已完成且有原始标题，显示完整内容
+  if (question.value.originalTitle) {
+    const guessedChars = new Set(
+      guesses.value.filter(g => g.isInTitle).map(g => g.character)
+    )
+    
+    return question.value.originalTitle.split('').map(char => {
+      if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
+        return char
+      }
+      if (guessedChars.has(char)) {
+        return `<span class="bg-green-500 text-white px-1 mx-0.5 rounded">${char}</span>`
+      }
+      return '<span class="text-gray-700">■</span>'
+    }).join('')
   }
   
-  return title.split('').map(char => {
-    // 标点符号直接显示
+  // 未完成：根据猜测记录重建显示
+  const chars = title.split('')
+  const positionMap = new Map() // position -> character
+  
+  guesses.value.forEach(g => {
+    if (g.isInTitle && g.titlePositions) {
+      g.titlePositions.forEach(pos => {
+        positionMap.set(pos, g.character)
+      })
+    }
+  })
+  
+  return chars.map((char, index) => {
     if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
       return char
     }
-    // 已猜测的字符显示，并加绿色背景
-    if (guessedChars.has(char)) {
-      return `<span class="bg-green-500 text-white px-1 mx-0.5 rounded">${char}</span>`
+    if (positionMap.has(index)) {
+      return `<span class="bg-green-500 text-white px-1 mx-0.5 rounded">${positionMap.get(index)}</span>`
     }
-    // 未猜测的显示方块
     return '<span class="text-gray-700">■</span>'
   }).join('')
 })
@@ -65,27 +82,44 @@ const displayedTitle = computed(() => {
 const displayedDescription = computed(() => {
   if (!question.value) return ''
   
-  // 如果已完成，使用原始描述；否则使用遮挡的描述
-  const description = question.value.originalDescription || question.value.description
-  const guessedChars = new Set(
-    guesses.value.filter(g => g.isInContent).map(g => g.character)
-  )
+  const description = question.value.description
   
-  // 如果没有原始描述（未完成），直接显示遮挡后的内容
-  if (!question.value.originalDescription) {
-    return description
+  // 如果已完成且有原始描述，显示完整内容
+  if (question.value.originalDescription) {
+    const guessedChars = new Set(
+      guesses.value.filter(g => g.isInContent).map(g => g.character)
+    )
+    
+    return question.value.originalDescription.split('').map(char => {
+      if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
+        return char
+      }
+      if (guessedChars.has(char)) {
+        return `<span class="bg-blue-500 text-white px-1 mx-0.5 rounded">${char}</span>`
+      }
+      return '<span class="text-gray-400">■</span>'
+    }).join('')
   }
   
-  return description.split('').map(char => {
-    // 标点符号直接显示
+  // 未完成：根据猜测记录重建显示
+  const chars = description.split('')
+  const positionMap = new Map() // position -> character
+  
+  guesses.value.forEach(g => {
+    if (g.isInContent && g.contentPositions) {
+      g.contentPositions.forEach(pos => {
+        positionMap.set(pos, g.character)
+      })
+    }
+  })
+  
+  return chars.map((char, index) => {
     if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
       return char
     }
-    // 已猜测的字符显示，并加蓝色背景（区别于标题的绿色）
-    if (guessedChars.has(char)) {
-      return `<span class="bg-blue-500 text-white px-1 mx-0.5 rounded">${char}</span>`
+    if (positionMap.has(index)) {
+      return `<span class="bg-blue-500 text-white px-1 mx-0.5 rounded">${positionMap.get(index)}</span>`
     }
-    // 未猜测的显示方块
     return '<span class="text-gray-400">■</span>'
   }).join('')
 })
@@ -106,13 +140,18 @@ async function startGame() {
     
     // 恢复已有的猜测记录
     if (response.data.guesses && response.data.guesses.length > 0) {
-      guesses.value = response.data.guesses.map((g: any) => ({
-        character: g.character,
-        isInTitle: g.is_in_title === 1,
-        titlePositions: Array.isArray(g.position) ? g.position : (g.position ? g.position.split(',').filter((p: string) => p).map(Number) : []),
-        isInContent: g.content_position && (Array.isArray(g.content_position) ? g.content_position.length > 0 : g.content_position.length > 0),
-        contentPositions: Array.isArray(g.content_position) ? g.content_position : (g.content_position ? g.content_position.split(',').filter((p: string) => p).map(Number) : [])
-      }))
+      guesses.value = response.data.guesses.map((g: any) => {
+        const titlePositions = Array.isArray(g.position) ? g.position : (g.position ? g.position.split(',').filter((p: string) => p).map(Number) : [])
+        const contentPositions = Array.isArray(g.content_position) ? g.content_position : (g.content_position ? g.content_position.split(',').filter((p: string) => p).map(Number) : [])
+        
+        return {
+          character: g.character,
+          isInTitle: g.is_in_title === 1,
+          titlePositions: titlePositions,
+          isInContent: contentPositions.length > 0,
+          contentPositions: contentPositions
+        }
+      })
     } else {
       guesses.value = []
     }
