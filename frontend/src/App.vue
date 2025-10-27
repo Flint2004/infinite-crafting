@@ -32,20 +32,16 @@ function onlyLogout() {
   router.push('/login')
 }
 
-function logoutAndClearWorkArea() {
-  // 清除用户信息和工作区
-  userStore.clearUser()
+function clearWorkArea() {
+  // 只清除工作区
   boxesStore.clearBoxes()
   showLogoutModal.value = false
-  router.push('/login')
 }
 
-function logoutAndClearElements() {
-  // 清除用户信息和元素列表
-  userStore.clearUser()
+function clearElements() {
+  // 只清除元素列表
   resourcesStore.clearResources()
   showLogoutModal.value = false
-  router.push('/login')
 }
 
 function logoutAndClearAll() {
@@ -279,7 +275,7 @@ async function copyToken() {
 
         <!-- 清除工作区 -->
         <button
-          @click="logoutAndClearWorkArea"
+          @click="clearWorkArea"
           class="w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition group"
         >
           <div class="flex items-start">
@@ -290,14 +286,14 @@ async function copyToken() {
             </div>
             <div class="ml-3 flex-1">
               <div class="font-semibold text-gray-800 group-hover:text-orange-600 transition">清除工作区</div>
-              <div class="text-xs text-gray-500 mt-1">退出登录并清空工作区，保留元素列表</div>
+              <div class="text-xs text-gray-500 mt-1">清空工作区，保留元素列表</div>
             </div>
           </div>
         </button>
 
         <!-- 清除元素区 -->
         <button
-          @click="logoutAndClearElements"
+          @click="clearElements"
           class="w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-red-500 hover:bg-red-50 transition group"
         >
           <div class="flex items-start">
@@ -308,7 +304,7 @@ async function copyToken() {
             </div>
             <div class="ml-3 flex-1">
               <div class="font-semibold text-gray-800 group-hover:text-red-600 transition">清除元素列表</div>
-              <div class="text-xs text-gray-500 mt-1">退出登录并清空元素列表，保留工作区</div>
+              <div class="text-xs text-gray-500 mt-1">清空元素列表，保留工作区</div>
             </div>
           </div>
         </button>
