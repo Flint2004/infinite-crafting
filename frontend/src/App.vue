@@ -139,7 +139,7 @@ async function copyToken() {
             :class="$route.path === '/' ? 'bg-blue-600' : 'bg-blue-500'"
             class="px-3 py-1.5 text-white text-sm rounded-lg hover:bg-blue-600 transition cursor-pointer inline-block"
           >
-            🎮 合成游戏
+            ♾️ 无限合成
           </RouterLink>
           <RouterLink
             to="/guess"
