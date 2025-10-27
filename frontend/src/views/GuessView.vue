@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useUserStore } from '@/stores/useUserStore'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import request from '@/utils/request'
 
 const userStore = useUserStore()
 const router = useRouter()
+const route = useRoute()
 
 // 游戏状态
 const seedString = ref('')
@@ -20,6 +21,7 @@ const guesses = ref<Array<{
 const currentInput = ref('')
 const isLoading = ref(false)
 const errorMessage = ref('')
+const errorTitle = ref('')
 const isCompleted = ref(false)
 const leaderboard = ref<Array<{ username: string; guess_count: number; completed_at: string }>>([])
 
@@ -130,15 +132,17 @@ const displayedDescription = computed(() => {
   }).join('')
 })
 
-// 开始游戏
-async function startGame() {
+// 加载题目
+async function loadQuestion() {
   if (!seedString.value.trim()) {
-    errorMessage.value = '请输入一个字符串'
+    errorTitle.value = '无效的题目'
+    errorMessage.value = '请提供有效的题目标识符'
     return
   }
   
   isLoading.value = true
   errorMessage.value = ''
+  errorTitle.value = ''
   
   try {
     const response = await request.get(`/guess/${encodeURIComponent(seedString.value)}`)
@@ -169,10 +173,12 @@ async function startGame() {
     
   } catch (error: any) {
     const errorData = error.response?.data
-    if (errorData?.message) {
-      errorMessage.value = `${errorData.error}: ${errorData.message}`
+    if (error.response?.status === 404) {
+      errorTitle.value = '题目不存在'
+      errorMessage.value = errorData?.message || errorData?.error || '该题目尚未生成'
     } else {
-      errorMessage.value = errorData?.error || '加载题目失败'
+      errorTitle.value = '加载失败'
+      errorMessage.value = errorData?.error || '加载题目失败，请稍后重试'
     }
   } finally {
     isLoading.value = false
@@ -222,7 +228,7 @@ async function submitGuess() {
       }
       
       // 重新加载排行榜
-      await startGame()
+      await loadQuestion()
     }
     
   } catch (error: any) {
@@ -250,6 +256,7 @@ function resetGame() {
   guesses.value = []
   currentInput.value = ''
   errorMessage.value = ''
+  errorTitle.value = ''
   isCompleted.value = false
   leaderboard.value = []
 }
@@ -257,17 +264,29 @@ function resetGame() {
 // 处理回车键
 function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Enter') {
-    if (!question.value) {
-      startGame()
-    } else {
-      submitGuess()
-    }
+    submitGuess()
   }
 }
 
+// 获取今日日期字符串
+function getTodayString(): string {
+  const today = new Date()
+  return today.getFullYear() + '-' + 
+         String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+         String(today.getDate()).padStart(2, '0')
+}
+
 onMounted(() => {
-  // 路由守卫已经处理了认证，这里不需要再检查
-  console.log('GuessView mounted, user:', userStore.user)
+  // 从路由参数读取 seedString
+  const str = route.params.str as string
+  
+  if (str && str.trim()) {
+    seedString.value = str
+    loadQuestion()
+  } else {
+    errorTitle.value = '无效的题目'
+    errorMessage.value = '请提供有效的题目标识符'
+  }
 })
 </script>
 
@@ -279,7 +298,7 @@ onMounted(() => {
         <div class="flex justify-between items-center">
           <div>
             <h1 class="text-3xl font-bold text-purple-600 mb-2">🎯 猜百科</h1>
-            <p class="text-gray-600">根据提示猜出百科词条的标题</p>
+            <p class="text-gray-600">题目：{{ seedString }}</p>
           </div>
           <div class="flex gap-2">
             <button
@@ -289,11 +308,10 @@ onMounted(() => {
               📜 历史记录
             </button>
             <button
-              v-if="question"
-              @click="resetGame"
-              class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+              @click="router.push(`/guess/${getTodayString()}`)"
+              class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition"
             >
-              🔄 新游戏
+              📅 今日题目
             </button>
             <button
               @click="router.push('/')"
@@ -306,44 +324,38 @@ onMounted(() => {
       </div>
 
       <!-- 错误提示 -->
-      <div v-if="errorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
-        {{ errorMessage }}
+      <div v-if="errorMessage" class="bg-red-100 border border-red-400 rounded-lg p-6 mb-6">
+        <div class="flex items-start gap-4">
+          <span class="text-4xl">❌</span>
+          <div class="flex-1">
+            <h2 class="text-xl font-bold text-red-700 mb-2">{{ errorTitle || '加载失败' }}</h2>
+            <p class="text-red-600 mb-4">{{ errorMessage }}</p>
+            <div class="flex gap-3">
+              <button
+                @click="router.push(`/guess/${getTodayString()}`)"
+                class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition"
+              >
+                🎯 进入今日题目
+              </button>
+              <button
+                @click="router.push('/')"
+                class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+              >
+                🏠 返回主页
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- 开始游戏 -->
-      <div v-if="!question" class="bg-white rounded-lg shadow-lg p-8">
-        <h2 class="text-xl font-bold mb-4 text-gray-800">输入一个字符串开始游戏</h2>
-        <div class="flex gap-4">
-          <input
-            v-model="seedString"
-            @keydown="handleKeydown"
-            type="text"
-            placeholder="例如：2025-10-26"
-            class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-          <button
-            @click="startGame"
-            :disabled="isLoading"
-            class="px-8 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition disabled:bg-gray-400"
-          >
-            {{ isLoading ? '生成中...' : '开始游戏' }}
-          </button>
-        </div>
-        <div class="mt-4 space-y-2">
-          <p class="text-sm text-blue-600">
-            📅 <strong>每日题目：</strong>输入日期格式（YYYY-MM-DD）可自动生成题目，如：2025-10-26
-          </p>
-          <p class="text-sm text-gray-500">
-            🎯 <strong>关键词题目：</strong>其他关键词需要管理员预先生成
-          </p>
-          <p class="text-sm text-gray-500">
-            💡 提示：相同的字符串会生成相同的题目，你可以和朋友挑战同一道题！
-          </p>
-        </div>
+      <!-- 加载中 -->
+      <div v-if="isLoading && !question" class="bg-white rounded-lg shadow-lg p-8 text-center">
+        <div class="text-4xl mb-4">⏳</div>
+        <p class="text-gray-600">加载题目中...</p>
       </div>
 
       <!-- 游戏主界面 -->
-      <div v-else class="space-y-6">
+      <div v-else-if="question" class="space-y-6">
         <!-- 完成提示 -->
         <div v-if="isCompleted" class="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg">
           <div class="flex items-center gap-3">
@@ -513,7 +525,7 @@ onMounted(() => {
               v-for="item in history"
               :key="item.id"
               class="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-              @click="() => { seedString = item.seed_string; showHistory = false; resetGame(); startGame(); }"
+              @click="() => { showHistory = false; router.push(`/guess/${item.seed_string}`); }"
             >
               <div class="flex justify-between items-start">
                 <div>

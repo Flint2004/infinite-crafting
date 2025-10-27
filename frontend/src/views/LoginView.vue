@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/useUserStore'
 import { useResourcesStore } from '@/stores/useResourcesStore'
 import request from '@/utils/request'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 const resourcesStore = useResourcesStore()
 
@@ -63,7 +64,10 @@ async function handleLogin() {
     if (response.data.success) {
       userStore.setUser(response.data.user)
       await loadBaseElements()
-      router.push('/')
+      
+      // 如果有 redirect 参数，跳转到原页面，否则跳转到首页
+      const redirect = route.query.redirect as string
+      router.push(redirect || '/')
     }
   } catch (err: any) {
     error.value = err.response?.data?.error || '登录失败'
@@ -119,12 +123,18 @@ async function copyTokenAndContinue() {
     alert('复制失败，请手动复制Token')
   }
   showTokenModal.value = false
-  router.push('/')
+  
+  // 如果有 redirect 参数，跳转到原页面，否则跳转到首页
+  const redirect = route.query.redirect as string
+  router.push(redirect || '/')
 }
 
 function skipAndContinue() {
   showTokenModal.value = false
-  router.push('/')
+  
+  // 如果有 redirect 参数，跳转到原页面，否则跳转到首页
+  const redirect = route.query.redirect as string
+  router.push(redirect || '/')
 }
 </script>
 

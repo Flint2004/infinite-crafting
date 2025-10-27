@@ -20,7 +20,7 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/guess',
+      path: '/guess/:str',
       name: 'guess',
       component: GuessView,
       meta: { requiresAuth: true }
@@ -40,7 +40,11 @@ router.beforeEach((to, from, next) => {
   const isLoggedIn = userStore.isLoggedIn()
   
   if (to.meta.requiresAuth && !isLoggedIn) {
-    next('/login')
+    // 保存原始路径，登录后返回
+    next({
+      path: '/login',
+      query: { redirect: to.fullPath }
+    })
   } else if (to.meta.requiresGuest && isLoggedIn) {
     next('/')
   } else {
