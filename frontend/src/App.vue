@@ -123,6 +123,12 @@ async function copyToken() {
         >
           <span class="text-red-500">SZU</span><span class="text-gray-400">Craft</span>
         </a>
+        <span 
+          v-if="!hasClickedSZUCraft"
+          class="absolute -top-1 -right-1 text-yellow-400 text-sm animate-ping"
+        >
+          ✨
+        </span>
         <div class="flex items-center space-x-2">
           <RouterLink
             to="/"
