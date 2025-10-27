@@ -111,24 +111,28 @@ async function copyToken() {
   <header v-if="userStore.isLoggedIn()" class="border-b border-gray-300 py-4 px-4 fixed z-20 w-full bg-white shadow-sm">
     <div class="flex w-full px-4 mx-auto justify-between items-center">
       <div class="flex items-center space-x-4">
-        <a 
-          href="https://www.szucraft.cn" 
-          target="_blank"
-          rel="noopener noreferrer"
-          @click="handleSZUCraftClick"
-          :class="[
-            'border-2 shadow-sm px-2.5 rounded-lg py-1 text-xl font-semibold select-none cursor-pointer transition',
-            hasClickedSZUCraft ? 'border-gray-200 hover:border-gray-300' : 'rainbow-border'
-          ]"
-        >
-          <span class="text-red-500">SZU</span><span class="text-gray-400">Craft</span>
-        </a>
-        <span 
-          v-if="!hasClickedSZUCraft"
-          class="absolute -top-1 -right-1 text-yellow-400 text-sm animate-ping"
-        >
-          ✨
-        </span>
+        <div class="relative inline-block">
+          <a 
+            href="https://www.szucraft.cn" 
+            target="_blank"
+            rel="noopener noreferrer"
+            @click="handleSZUCraftClick"
+            :class="[
+              'border-2 shadow-sm px-2.5 rounded-lg py-1 text-xl font-semibold select-none cursor-pointer transition',
+              hasClickedSZUCraft ? 'border-gray-200 hover:border-gray-300' : 'rainbow-border'
+            ]"
+          >
+            <span class="text-red-500">SZU</span><span class="text-gray-400">Craft</span>
+          </a>
+          
+          <!-- 星星现在在正确的容器内 -->
+          <span 
+            v-if="!hasClickedSZUCraft"
+            class="absolute -top-1 -right-1 text-yellow-400 text-sm animate-ping"
+          >
+            ✨
+          </span>
+        </div>
         <div class="flex items-center space-x-2">
           <RouterLink
             to="/"
