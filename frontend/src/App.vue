@@ -38,12 +38,6 @@ function clearWorkArea() {
   showLogoutModal.value = false
 }
 
-function clearElements() {
-  // 只清除元素列表
-  resourcesStore.clearResources()
-  showLogoutModal.value = false
-}
-
 function logoutAndClearAll() {
   // 清除所有数据
   userStore.clearUser()
@@ -287,24 +281,6 @@ async function copyToken() {
             <div class="ml-3 flex-1">
               <div class="font-semibold text-gray-800 group-hover:text-orange-600 transition">清除工作区</div>
               <div class="text-xs text-gray-500 mt-1">清空工作区，保留元素列表</div>
-            </div>
-          </div>
-        </button>
-
-        <!-- 清除元素区 -->
-        <button
-          @click="clearElements"
-          class="w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-red-500 hover:bg-red-50 transition group"
-        >
-          <div class="flex items-start">
-            <div class="flex-shrink-0 w-8 h-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-              </svg>
-            </div>
-            <div class="ml-3 flex-1">
-              <div class="font-semibold text-gray-800 group-hover:text-red-600 transition">清除元素列表</div>
-              <div class="text-xs text-gray-500 mt-1">清空元素列表，保留工作区</div>
             </div>
           </div>
         </button>
