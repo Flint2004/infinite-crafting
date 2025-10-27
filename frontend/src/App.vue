@@ -108,8 +108,8 @@ async function copyToken() {
 </script>
 
 <template>
-  <header v-if="userStore.isLoggedIn()" class="border-b border-gray-300 py-4 px-4 fixed z-20 w-full bg-white shadow-sm">
-    <div class="flex w-full px-4 mx-auto justify-between items-center flex-wrap">
+  <header v-if="userStore.isLoggedIn()" class="border-b border-gray-300 py-2 sm:py-4 px-4 fixed z-20 w-full bg-white shadow-sm">
+    <div class="flex w-full px-4 mx-auto justify-between items-center flex-wrap gap-y-2">
       <div class="flex items-center space-x-4">
         <div class="relative inline-block">
           <a 
@@ -150,7 +150,54 @@ async function copyToken() {
           </RouterLink>
         </div>
       </div>
-      <div class="flex items-center space-x-3 sm:space-x-4">
+
+      <!-- Mobile: Player info centered, nav links split -->
+      <div class="sm:hidden w-full order-3 flex flex-col items-center gap-y-2">
+        <div class="relative select-none">
+          <button
+            @click="showUserMenu = !showUserMenu"
+            class="text-sm text-gray-500 hover:text-gray-700 transition flex items-center space-x-1"
+          >
+            <span>玩家: <span class="font-semibold text-gray-700">{{ userStore.user?.username }}</span></span>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          <div v-if="showUserMenu" @click="showUserMenu = false" class="fixed inset-0 z-30"></div>
+          <div v-if="showUserMenu" class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-40">
+            <div class="p-3">
+              <div class="text-xs text-gray-500 mb-1 select-none">您的Token</div>
+              <div class="flex items-center space-x-2">
+                <input
+                  :value="userStore.user?.token"
+                  readonly
+                  class="flex-1 text-xs px-2 py-1 border border-gray-300 rounded bg-gray-50 font-mono select-text"
+                  type="text"
+                />
+                <button
+                  @click="copyToken"
+                  class="px-2 py-1 bg-sky-500 text-white text-xs rounded hover:bg-sky-600 transition select-none"
+                >
+                  复制
+                </button>
+              </div>
+              <div class="text-xs text-gray-400 mt-1 select-none">请妥善保存，用于下次登录</div>
+            </div>
+          </div>
+        </div>
+        <nav class="w-full flex justify-between items-center">
+          <RouterLink class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm" to="/about">关于</RouterLink>
+          <button
+            @click="showLogoutDialog"
+            class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm"
+          >
+            清理
+          </button>
+        </nav>
+      </div>
+
+      <!-- Desktop: Player info and nav links together -->
+      <div class="hidden sm:flex items-center space-x-3 sm:space-x-4 order-2">
         <div class="relative select-none">
           <button
             @click="showUserMenu = !showUserMenu"
@@ -185,7 +232,7 @@ async function copyToken() {
         </div>
         <nav class="flex space-x-3 sm:space-x-5 items-center">
           <RouterLink class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm sm:text-base" to="/about">关于</RouterLink>
-          <button 
+          <button
             @click="showLogoutDialog"
             class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm sm:text-base"
           >
@@ -195,7 +242,7 @@ async function copyToken() {
       </div>
     </div>
   </header>
-  <div class="bg-gray-50 h-screen flex flex-col" :class="userStore.isLoggedIn() ? 'pt-24 sm:pt-20' : 'pt-4'">
+  <div class="bg-gray-50 h-screen flex flex-col" :class="userStore.isLoggedIn() ? 'pt-32 sm:pt-20' : 'pt-4'">
     <div class="flex-grow min-h-0 relative z-0">
       <RouterView/>
     </div>
