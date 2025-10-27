@@ -224,8 +224,8 @@ onMounted(() => {
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
       @click.self="showHistory = false"
     >
-      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-auto">
-        <div class="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] sm:max-h-[80vh] flex flex-col">
+        <div class="sticky top-0 bg-white border-b p-4 flex justify-between items-center flex-shrink-0">
           <h2 class="text-xl font-bold text-gray-800">📜 游戏历史</h2>
           <button
             @click="showHistory = false"
@@ -234,7 +234,7 @@ onMounted(() => {
             ×
           </button>
         </div>
-        <div class="p-4 space-y-3">
+        <div class="p-4 space-y-3 overflow-y-auto">
           <div
             v-for="item in history"
             :key="item.id"
@@ -272,8 +272,8 @@ onMounted(() => {
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
       @click.self="showAllSeeds = false"
     >
-      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-auto">
-        <div class="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] sm:max-h-[80vh] flex flex-col">
+        <div class="sticky top-0 bg-white border-b p-4 flex justify-between items-center flex-shrink-0">
           <h2 class="text-xl font-bold text-gray-800">📚 所有已生成题目</h2>
           <button
             @click="showAllSeeds = false"
@@ -282,7 +282,7 @@ onMounted(() => {
             ×
           </button>
         </div>
-        <div class="p-4 space-y-3">
+        <div class="p-4 space-y-3 overflow-y-auto">
           <div
             v-for="seed in allSeeds"
             :key="seed.seedString"
