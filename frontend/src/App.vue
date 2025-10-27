@@ -150,7 +150,7 @@ async function copyToken() {
           </RouterLink>
         </div>
       </div>
-      <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-3 sm:space-x-4">
         <div class="relative select-none">
           <button
             @click="showUserMenu = !showUserMenu"
@@ -162,7 +162,7 @@ async function copyToken() {
             </svg>
           </button>
           <div v-if="showUserMenu" @click="showUserMenu = false" class="fixed inset-0 z-10"></div>
-          <div v-if="showUserMenu" class="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+          <div v-if="showUserMenu" class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
             <div class="p-3">
               <div class="text-xs text-gray-500 mb-1 select-none">您的Token</div>
               <div class="flex items-center space-x-2">
@@ -183,19 +183,19 @@ async function copyToken() {
             </div>
           </div>
         </div>
+        <nav class="flex space-x-3 sm:space-x-5 items-center">
+          <RouterLink class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm sm:text-base" to="/about">关于</RouterLink>
+          <button 
+            @click="showLogoutDialog"
+            class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm sm:text-base"
+          >
+            清理
+          </button>
+        </nav>
       </div>
-      <nav class="flex space-x-5 items-center">
-        <RouterLink class="text-gray-500 transition hover:text-gray-600 font-semibold" to="/about">关于</RouterLink>
-        <button 
-          @click="showLogoutDialog"
-          class="text-gray-500 transition hover:text-gray-600 font-semibold"
-        >
-          清理
-        </button>
-      </nav>
     </div>
   </header>
-  <div class="bg-gray-50 h-screen flex flex-col" :class="userStore.isLoggedIn() ? 'pt-24' : 'pt-4'">
+  <div class="bg-gray-50 h-screen flex flex-col" :class="userStore.isLoggedIn() ? 'pt-24 sm:pt-20' : 'pt-4'">
     <div class="flex-grow min-h-0">
       <RouterView/>
     </div>
