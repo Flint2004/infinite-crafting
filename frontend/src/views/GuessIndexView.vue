@@ -224,7 +224,7 @@ onMounted(() => {
       class="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 sm:pt-20 pt-32 z-50"
       @click.self="showHistory = false"
     >
-      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[70vh] sm:max-h-[60vh] flex flex-col">
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] sm:max-h-[60vh] flex flex-col">
         <div class="sticky top-0 bg-white border-b p-4 flex justify-between items-center flex-shrink-0">
           <h2 class="text-xl font-bold text-gray-800">📜 游戏历史</h2>
           <button
