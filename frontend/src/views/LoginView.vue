@@ -142,16 +142,14 @@ function skipAndContinue() {
   <div class="min-h-[80vh] flex items-center justify-center">
     <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-md border border-gray-200">
       <div class="flex items-center justify-center mb-6">
-        <div class="border-2 border-gray-200 shadow-sm px-3 rounded-lg py-1.5 text-gray-500 text-2xl font-semibold">
-          <a 
-            href="https://www.szucraft.cn" 
-            target="_blank"
-            rel="noopener noreferrer"
-            class="border-2 border-gray-200 shadow-sm px-2.5 rounded-lg py-1 text-xl font-semibold select-none cursor-pointer hover:border-gray-300 transition"
-          >
-            <span class="text-red-500">SZU</span><span class="text-gray-400">Craft</span>
-          </a>
-        </div>
+        <a 
+          href="https://www.szucraft.cn" 
+          target="_blank"
+          rel="noopener noreferrer"
+          class="border-2 border-gray-200 shadow-sm px-2.5 rounded-lg py-1 text-xl font-semibold select-none cursor-pointer hover:border-gray-300 transition"
+        >
+          <span class="text-red-500">SZU</span><span class="text-gray-400">Craft</span>
+        </a>
       </div>
       
       <div class="flex border-b border-gray-200 mb-6">
