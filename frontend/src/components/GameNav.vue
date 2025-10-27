@@ -2,14 +2,6 @@
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-
-// 获取今日日期字符串
-function getTodayString(): string {
-  const today = new Date()
-  return today.getFullYear() + '-' + 
-         String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-         String(today.getDate()).padStart(2, '0')
-}
 </script>
 
 <template>
@@ -21,10 +13,10 @@ function getTodayString(): string {
       🎮 合成游戏
     </button>
     <button
-      @click="router.push(`/guess/${getTodayString()}`)"
+      @click="router.push('/guess')"
       class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition"
     >
-      🎯 今日题目
+      🎯 猜百科
     </button>
   </div>
 </template>
