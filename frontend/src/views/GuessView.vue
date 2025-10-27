@@ -69,8 +69,8 @@ const displayedTitle = computed(() => {
     )
     
     return originalTitle.split('').map(char => {
-      // 标点符号直接显示
-      if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
+      // 标点符号直接显示（包括中英文引号、标点等）
+      if (/[\u3000-\u303F\uFF00-\uFFEF\u2010-\u201F]/.test(char)) {
         return char
       }
       // 已猜测的字符用绿色高亮
@@ -95,7 +95,7 @@ const displayedTitle = computed(() => {
   })
   
   return chars.map((char, index) => {
-    if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
+    if (/[\u3000-\u303F\uFF00-\uFFEF\u2010-\u201F]/.test(char)) {
       return char
     }
     if (positionMap.has(index)) {
@@ -120,8 +120,8 @@ const displayedDescription = computed(() => {
     )
     
     return originalDescription.split('').map(char => {
-      // 标点符号直接显示
-      if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
+      // 标点符号直接显示（包括中英文引号、标点等）
+      if (/[\u3000-\u303F\uFF00-\uFFEF\u2010-\u201F]/.test(char)) {
         return char
       }
       // 已猜测的字符用蓝色高亮
@@ -146,7 +146,7 @@ const displayedDescription = computed(() => {
   })
   
   return chars.map((char, index) => {
-    if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
+    if (/[\u3000-\u303F\uFF00-\uFFEF\u2010-\u201F]/.test(char)) {
       return char
     }
     if (positionMap.has(index)) {
