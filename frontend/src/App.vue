@@ -133,7 +133,7 @@ async function copyToken() {
             ✨
           </span>
         </div>
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-2 whitespace-nowrap">
           <RouterLink
             to="/"
             :class="$route.path === '/' ? 'bg-blue-600' : 'bg-blue-500'"
@@ -161,8 +161,8 @@ async function copyToken() {
               <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
           </button>
-          <div v-if="showUserMenu" @click="showUserMenu = false" class="fixed inset-0 z-10"></div>
-          <div v-if="showUserMenu" class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+          <div v-if="showUserMenu" @click="showUserMenu = false" class="fixed inset-0 z-30"></div>
+          <div v-if="showUserMenu" class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-40">
             <div class="p-3">
               <div class="text-xs text-gray-500 mb-1 select-none">您的Token</div>
               <div class="flex items-center space-x-2">
@@ -196,7 +196,7 @@ async function copyToken() {
     </div>
   </header>
   <div class="bg-gray-50 h-screen flex flex-col" :class="userStore.isLoggedIn() ? 'pt-24 sm:pt-20' : 'pt-4'">
-    <div class="flex-grow min-h-0">
+    <div class="flex-grow min-h-0 relative z-0">
       <RouterView/>
     </div>
   </div>

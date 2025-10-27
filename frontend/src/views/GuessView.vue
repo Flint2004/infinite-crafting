@@ -336,7 +336,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4 pt-24">
+  <div class="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
     <div class="max-w-4xl mx-auto">
       <!-- 标题栏 -->
       <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
