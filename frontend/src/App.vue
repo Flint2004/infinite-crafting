@@ -152,7 +152,7 @@ async function copyToken() {
       </div>
 
       <!-- Mobile: Player info centered, nav links split -->
-      <div class="sm:hidden w-full order-3 flex flex-col items-center gap-y-2">
+      <div class="sm:hidden w-full order-3 flex flex-col items-center gap-y-1">
         <div class="relative select-none">
           <button
             @click="showUserMenu = !showUserMenu"
@@ -186,10 +186,10 @@ async function copyToken() {
           </div>
         </div>
         <nav class="w-full flex justify-between items-center">
-          <RouterLink class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm" to="/about">关于</RouterLink>
+          <RouterLink class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm bg-white shadow-sm hover:shadow-md" to="/about">关于</RouterLink>
           <button
             @click="showLogoutDialog"
-            class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm"
+            class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm bg-white shadow-sm hover:shadow-md"
           >
             清理
           </button>
@@ -231,10 +231,10 @@ async function copyToken() {
           </div>
         </div>
         <nav class="flex space-x-3 sm:space-x-5 items-center">
-          <RouterLink class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm sm:text-base" to="/about">关于</RouterLink>
+          <RouterLink class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm sm:text-base bg-white shadow-sm hover:shadow-md" to="/about">关于</RouterLink>
           <button
             @click="showLogoutDialog"
-            class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm sm:text-base"
+            class="px-3 py-1.5 rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 font-semibold text-sm sm:text-base bg-white shadow-sm hover:shadow-md"
           >
             清理
           </button>

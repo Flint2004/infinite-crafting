@@ -9,8 +9,8 @@ function goBack() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 flex items-center justify-center">
-    <div class="max-w-2xl w-full bg-white rounded-2xl shadow-lg p-8 sm:p-12 border border-gray-200">
+  <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-8">
+    <div class="max-w-2xl mx-auto w-full bg-white rounded-2xl shadow-lg p-8 sm:p-12 border border-gray-200">
       <div class="text-center mb-8">
         <h1 class="text-4xl sm:text-5xl font-bold text-gray-800 mb-3">关于 本项目</h1>
         <p class="text-gray-500 text-lg">创造与发现的小游戏合集</p>
@@ -35,7 +35,7 @@ function goBack() {
           <h2 class="text-xl font-semibold text-gray-800 mb-2 border-b pb-2">Statement</h2>
           <div class="flex items-start gap-3 mt-3 text-base">
             <span class="w-6 text-center pt-1">🤖</span>
-            <p>This website is developed by AI, and the game is inspired by Infinite Craft & CaiYan.</p>
+            <p>This website is developed mostly by AI, and the game is inspired by Infinite Craft & CaiYan.</p>
           </div>
         </div>
       </div>
