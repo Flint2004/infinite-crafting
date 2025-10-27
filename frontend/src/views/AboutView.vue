@@ -21,7 +21,7 @@ function goBack() {
           <h2 class="text-xl font-semibold text-gray-800 mb-2 border-b pb-2">Author</h2>
           <div class="space-y-3 mt-3 text-base">
             <div class="flex items-center gap-3">
-              <span class="w-6 text-center">👤</span>
+              <img src="https://api.rms.net.cn/head/onriC9" alt="Author Avatar" class="w-6 h-6 rounded-md object-cover">
               <span>Flint Ting @ SZU (Four_Yi)</span>
             </div>
             <div class="flex items-center gap-3">
