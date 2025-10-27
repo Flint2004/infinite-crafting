@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useUserStore } from '@/stores/useUserStore'
 import { useRouter, useRoute } from 'vue-router'
 import request from '@/utils/request'
@@ -275,6 +275,18 @@ function getTodayString(): string {
          String(today.getMonth() + 1).padStart(2, '0') + '-' + 
          String(today.getDate()).padStart(2, '0')
 }
+
+// 监听路由参数变化
+watch(() => route.params.str, (newStr) => {
+  if (newStr && typeof newStr === 'string' && newStr.trim()) {
+    // 重置游戏状态
+    resetGame()
+    
+    // 加载新题目
+    seedString.value = newStr
+    loadQuestion()
+  }
+})
 
 onMounted(() => {
   // 从路由参数读取 seedString
