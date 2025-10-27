@@ -96,9 +96,14 @@ async function copyToken() {
   <header v-if="userStore.isLoggedIn()" class="border-b border-gray-300 py-4 px-4 fixed z-20 w-full bg-white shadow-sm">
     <div class="flex w-full px-4 mx-auto justify-between items-center">
       <div class="flex items-center space-x-4">
-        <div class="border-2 border-gray-200 shadow-sm px-2.5 rounded-lg py-1 text-gray-500 text-xl font-semibold select-none">
-          <span class="text-sky-400">Open</span>Craft
-        </div>
+        <a 
+          href="https://www.szucraft.cn" 
+          target="_blank"
+          rel="noopener noreferrer"
+          class="border-2 border-gray-200 shadow-sm px-2.5 rounded-lg py-1 text-xl font-semibold select-none cursor-pointer hover:border-gray-300 transition"
+        >
+          <span class="text-red-500">SZU</span><span class="text-gray-400">Craft</span>
+        </a>
         <div class="flex items-center space-x-2">
           <RouterLink
             to="/"
