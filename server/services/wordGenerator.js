@@ -136,6 +136,84 @@ export async function generateUniqueWord(seedString, db, aiConfig) {
 }
 
 /**
+ * 从 Minecraft Wiki 获取随机页面内容
+ * @param {Object} db - 数据库连接
+ * @returns {Promise<Object>} { title, description }
+ */
+async function fetchMinecraftWikiContent(db) {
+    const maxRetries = 10;
+    
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            // 访问随机页面，允许重定向
+            const response = await axios.get('https://zh.minecraft.wiki/Special:%E9%9A%8F%E6%9C%BA%E9%A1%B5%E9%9D%A2/Minecraft', {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                },
+                maxRedirects: 10,
+                validateStatus: (status) => status >= 200 && status < 400
+            });
+            
+            const html = response.data;
+            
+            // 提取页面标题
+            const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+            let title = titleMatch ? titleMatch[1].replace(/ - Minecraft Wiki.*$/, '').trim() : '';
+            
+            // 检查标题是否包含"教程"
+            if (title.includes('教程')) {
+                console.log(`⚠️  跳过包含"教程"的页面: ${title} (尝试 ${i + 1}/${maxRetries})`);
+                continue;
+            }
+            
+            // 检查数据库是否已存在
+            const existing = await db.get(
+                'SELECT id FROM guess_questions WHERE title = ?',
+                [title]
+            );
+            
+            if (existing) {
+                console.log(`⚠️  页面已存在: ${title} (尝试 ${i + 1}/${maxRetries})`);
+                continue;
+            }
+            
+            // 提取第一段描述（<p>标签内容）
+            const paragraphMatch = html.match(/<p[^>]*>([\s\S]*?)<\/p>/);
+            let description = '';
+            
+            if (paragraphMatch) {
+                // 移除HTML标签
+                description = paragraphMatch[1]
+                    .replace(/<[^>]+>/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                
+                // 限制长度
+                if (description.length > 200) {
+                    description = description.substring(0, 200) + '...';
+                }
+            }
+            
+            if (!title || !description) {
+                console.log(`⚠️  页面信息不完整 (尝试 ${i + 1}/${maxRetries})`);
+                continue;
+            }
+            
+            console.log(`✅ 成功获取 Minecraft Wiki 内容: ${title}`);
+            return {
+                title: title,
+                description: description
+            };
+            
+        } catch (error) {
+            console.error(`获取 Minecraft Wiki 失败 (尝试 ${i + 1}/${maxRetries}):`, error.message);
+        }
+    }
+    
+    throw new Error('无法从 Minecraft Wiki 获取合适的页面');
+}
+
+/**
  * 获取百度百科内容
  * @param {string} word - 词条
  * @returns {Promise<Object>} { title, description }
@@ -176,6 +254,22 @@ export async function fetchBaikeContent(word) {
     } catch (error) {
         console.error(`获取百科内容失败 (${word}):`, error.message);
         throw new Error(`无法获取词条"${word}"的百科内容`);
+    }
+}
+
+/**
+ * 获取内容（根据种子字符串判断使用哪个来源）
+ * @param {string} seedString - 种子字符串
+ * @param {string} word - 词条（普通百科使用）
+ * @param {Object} db - 数据库连接
+ * @returns {Promise<Object>} { title, description }
+ */
+export async function fetchContent(seedString, word, db) {
+    // 如果以 mc- 开头，从 Minecraft Wiki 获取
+    if (seedString.startsWith('mc-')) {
+        return await fetchMinecraftWikiContent(db);
+    } else {
+        return await fetchBaikeContent(word);
     }
 }
 

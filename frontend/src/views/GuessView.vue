@@ -29,6 +29,10 @@ const leaderboard = ref<Array<{ username: string; guess_count: number; completed
 const history = ref<Array<any>>([])
 const showHistory = ref(false)
 
+// 浮窗提示
+const toastMessage = ref('')
+const showToast = ref(false)
+
 // 统计信息
 const totalGuesses = computed(() => guesses.value.length)
 const correctGuesses = computed(() => guesses.value.filter(g => g.isInTitle || g.isInContent).length)
@@ -39,6 +43,15 @@ function decodeHtmlEntities(text: string): string {
   const textarea = document.createElement('textarea')
   textarea.innerHTML = text
   return textarea.value
+}
+
+// 显示浮窗提示
+function showToastNotification(message: string) {
+  toastMessage.value = message
+  showToast.value = true
+  setTimeout(() => {
+    showToast.value = false
+  }, 2000)
 }
 
 // 显示的标题（根据已猜测的字符显示）
@@ -198,14 +211,23 @@ async function loadQuestion() {
 
 // 提交猜测
 async function submitGuess() {
-  if (!currentInput.value || currentInput.value.length !== 1) {
-    errorMessage.value = '请输入单个汉字'
+  if (!currentInput.value || currentInput.value.trim().length === 0) {
+    showToastNotification('请输入单个字（英文除外）')
     return
   }
   
+  // 检查是否只有一个字符
+  const trimmed = currentInput.value.trim()
+  if (trimmed.length > 1) {
+    showToastNotification('请只输入一个字')
+    return
+  }
+  
+  const character = trimmed
+  
   // 检查是否已经猜过
-  if (guesses.value.some(g => g.character === currentInput.value)) {
-    errorMessage.value = '已经猜过这个字了'
+  if (guesses.value.some(g => g.character === character)) {
+    showToastNotification('已经猜过这个字了')
     currentInput.value = ''
     return
   }
@@ -215,7 +237,7 @@ async function submitGuess() {
   
   try {
     const response = await request.post(`/guess/${question.value.id}/submit`, {
-      character: currentInput.value
+      character: character
     })
     
     guesses.value.push({
@@ -439,8 +461,7 @@ onMounted(() => {
               v-model="currentInput"
               @keydown="handleKeydown"
               type="text"
-              maxlength="1"
-              placeholder="输入单个汉字"
+              placeholder="输入单个字（英文除外）"
               class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-center text-2xl"
             />
             <button
@@ -572,10 +593,35 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- 浮窗提示 -->
+    <Transition name="toast">
+      <div
+        v-if="showToast"
+        class="fixed top-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50"
+      >
+        {{ toastMessage }}
+      </div>
+    </Transition>
   </div>
 </template>
 
 <style scoped>
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translate(-50%, -20px);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -20px);
+}
+
 /* 自定义样式 */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {

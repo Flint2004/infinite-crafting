@@ -13,6 +13,8 @@ const errorMessage = ref('')
 const isLoading = ref(false)
 const history = ref<Array<any>>([])
 const showHistory = ref(false)
+const allSeeds = ref<Array<any>>([])
+const showAllSeeds = ref(false)
 
 // 获取今日日期字符串
 function getTodayString(): string {
@@ -51,6 +53,20 @@ async function loadHistory() {
   }
 }
 
+// 加载所有题目种子
+async function loadAllSeeds() {
+  isLoading.value = true
+  try {
+    const response = await request.get('/guess/seeds')
+    allSeeds.value = response.data.seeds
+    showAllSeeds.value = true
+  } catch (error: any) {
+    errorMessage.value = error.response?.data?.error || '加载题目列表失败'
+  } finally {
+    isLoading.value = false
+  }
+}
+
 // 处理回车键
 function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Enter') {
@@ -79,7 +95,14 @@ onMounted(() => {
             :disabled="isLoading"
             class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
           >
-            📜 历史记录
+            📜 我的历史
+          </button>
+          <button
+            @click="loadAllSeeds"
+            :disabled="isLoading"
+            class="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition disabled:opacity-50"
+          >
+            📚 所有题目
           </button>
           <button
             @click="router.push('/')"
@@ -136,6 +159,12 @@ onMounted(() => {
             <span>📅</span>
             <div>
               <strong>每日题目：</strong>输入日期格式（YYYY-MM-DD）可自动生成题目，如：{{ getTodayString() }}
+            </div>
+          </div>
+          <div class="flex items-start gap-2 text-green-600">
+            <span>⛏️</span>
+            <div>
+              <strong>Minecraft 题目：</strong>输入 mc- 开头的关键词（如 mc-1），由管理员从 Minecraft Wiki 生成
             </div>
           </div>
           <div class="flex items-start gap-2 text-gray-600">
@@ -232,6 +261,50 @@ onMounted(() => {
           </div>
           <div v-if="history.length === 0" class="text-center py-8 text-gray-500">
             暂无游戏记录
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 所有题目弹窗 -->
+    <div
+      v-if="showAllSeeds"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+      @click.self="showAllSeeds = false"
+    >
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-auto">
+        <div class="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+          <h2 class="text-xl font-bold text-gray-800">📚 所有已生成题目</h2>
+          <button
+            @click="showAllSeeds = false"
+            class="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+        <div class="p-4 space-y-3">
+          <div
+            v-for="seed in allSeeds"
+            :key="seed.seedString"
+            class="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition"
+            @click="() => { showAllSeeds = false; router.push(`/guess/${seed.seedString}`); }"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="font-bold text-lg text-gray-900">{{ seed.seedString }}</div>
+                <div class="text-xs text-gray-500 mt-1">
+                  创建于：{{ new Date(seed.createdAt).toLocaleString('zh-CN') }}
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-purple-600 font-bold">
+                  👥 {{ seed.completedCount }} 人完成
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-if="allSeeds.length === 0" class="text-center py-8 text-gray-500">
+            暂无题目
           </div>
         </div>
       </div>

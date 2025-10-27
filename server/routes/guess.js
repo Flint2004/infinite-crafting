@@ -2,7 +2,7 @@
  * 猜百科游戏相关路由
  */
 
-import { generateUniqueWord, fetchBaikeContent } from '../services/wordGenerator.js';
+import { generateUniqueWord, fetchContent } from '../services/wordGenerator.js';
 
 export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig }) {
     
@@ -39,23 +39,28 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                                      String(today.getDate()).padStart(2, '0');
                     
                     const isTodayDate = isDateFormat && str === todayStr;
+                    const isMcKeyword = str.startsWith('mc-');
                     
                     if (!isTodayDate) {
                         // 非今日日期的关键词需要预先生成
+                        const message = isMcKeyword 
+                            ? `Minecraft 题目需要管理员预先生成。该关键词 "${str}" 尚未生成。`
+                            : `该关键词的题目尚未生成。只有今日日期（${todayStr}）可以自动生成题目，其他关键词请联系管理员预先生成。`;
+                        
                         return reply.code(404).send({ 
                             error: '题目不存在', 
-                            message: `该关键词的题目尚未生成。只有今日日期（${todayStr}）可以自动生成题目，其他关键词请联系管理员预先生成。` 
+                            message: message
                         });
                     }
                     
                     // 今日日期可以自动生成新题目
                     console.log(`🎮 为今日日期 "${str}" 生成新题目...`);
                     
-                    // 1. 生成词汇
-                    const word = await generateUniqueWord(str, db, aiConfig);
+                    // 1. 生成词汇（mc- 开头则不需要）
+                    const word = str.startsWith('mc-') ? 'minecraft-random' : await generateUniqueWord(str, db, aiConfig);
                     
-                    // 2. 获取百科内容
-                    const { title, description } = await fetchBaikeContent(word);
+                    // 2. 获取内容（根据前缀判断来源）
+                    const { title, description } = await fetchContent(str, word, db);
                     
                     // 3. 存入数据库
                     await db.run(
@@ -156,6 +161,11 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
             
             if (!character || character.length !== 1) {
                 return reply.code(400).send({ error: '请提供单个汉字' });
+            }
+            
+            // 检查是否包含英文或空格
+            if (/[a-zA-Z\s]/.test(character)) {
+                return reply.code(400).send({ error: '不能输入英文或空格' });
             }
             
             try {
@@ -373,6 +383,40 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
         }
     });
     
+    // 获取所有已生成题目的种子列表
+    fastify.route({
+        method: 'GET',
+        url: '/guess/seeds',
+        handler: async (request, reply) => {
+            const user = await authenticateUser(request, reply);
+            if (!user) return;
+            
+            try {
+                const seeds = await db.all(
+                    `SELECT seed_string, created_at,
+                            (SELECT COUNT(*) FROM guess_results WHERE question_id = gq.id) as completed_count
+                     FROM guess_questions gq
+                     ORDER BY created_at DESC`
+                );
+                
+                return {
+                    seeds: seeds.map(s => ({
+                        seedString: s.seed_string,
+                        completedCount: s.completed_count,
+                        createdAt: s.created_at
+                    }))
+                };
+                
+            } catch (error) {
+                console.error('获取种子列表失败:', error);
+                return reply.code(500).send({ 
+                    error: '获取种子列表失败', 
+                    details: error.message 
+                });
+            }
+        }
+    });
+    
     // 获取用户的游戏历史
     fastify.route({
         method: 'GET',
@@ -446,11 +490,11 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                 
                 console.log(`🔧 [管理员] 为关键词 "${seedString}" 生成题目...`);
                 
-                // 1. 生成词汇
-                const word = await generateUniqueWord(seedString, db, aiConfig);
+                // 1. 生成词汇（mc- 开头则不需要）
+                const word = seedString.startsWith('mc-') ? 'minecraft-random' : await generateUniqueWord(seedString, db, aiConfig);
                 
-                // 2. 获取百科内容
-                const { title, description } = await fetchBaikeContent(word);
+                // 2. 获取内容（根据前缀判断来源）
+                const { title, description } = await fetchContent(seedString, word, db);
                 
                 // 3. 存入数据库
                 await db.run(
@@ -524,11 +568,11 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                     
                     console.log(`🔧 [管理员] 批量生成: "${seedString}"...`);
                     
-                    // 生成词汇
-                    const word = await generateUniqueWord(seedString, db, aiConfig);
+                    // 生成词汇（mc- 开头则不需要）
+                    const word = seedString.startsWith('mc-') ? 'minecraft-random' : await generateUniqueWord(seedString, db, aiConfig);
                     
-                    // 获取百科内容
-                    const { title, description } = await fetchBaikeContent(word);
+                    // 获取内容（根据前缀判断来源）
+                    const { title, description } = await fetchContent(seedString, word, db);
                     
                     // 存入数据库
                     await db.run(
