@@ -12,31 +12,46 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView,
-      meta: { requiresGuest: true }
+      meta: { 
+        requiresGuest: true,
+        title: '登录'
+      }
     },
     {
       path: '/',
       name: 'home',
       component: HomeView,
-      meta: { requiresAuth: true }
+      meta: { 
+        requiresAuth: true,
+        title: '合成游戏'
+      }
     },
     {
       path: '/guess',
       name: 'guess-index',
       component: GuessIndexView,
-      meta: { requiresAuth: true }
+      meta: { 
+        requiresAuth: true,
+        title: '猜百科'
+      }
     },
     {
       path: '/guess/:str',
       name: 'guess',
       component: GuessView,
-      meta: { requiresAuth: true }
+      meta: { 
+        requiresAuth: true,
+        title: '猜百科'
+      }
     },
     {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue'),
-      meta: { requiresAuth: true }
+      meta: { 
+        requiresAuth: true,
+        title: '关于'
+      }
     }
   ]
 })
@@ -45,6 +60,14 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const isLoggedIn = userStore.isLoggedIn()
+  
+  // 设置页面标题
+  const baseTitle = '深圳大学Minecraft荔方社'
+  if (to.meta.title) {
+    document.title = `${to.meta.title} - ${baseTitle}`
+  } else {
+    document.title = baseTitle
+  }
   
   if (to.meta.requiresAuth && !isLoggedIn) {
     // 保存原始路径，登录后返回
