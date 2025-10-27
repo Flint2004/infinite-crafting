@@ -34,19 +34,28 @@ const totalGuesses = computed(() => guesses.value.length)
 const correctGuesses = computed(() => guesses.value.filter(g => g.isInTitle || g.isInContent).length)
 const wrongGuesses = computed(() => guesses.value.filter(g => !g.isInTitle && !g.isInContent))
 
+// 解码 HTML 实体（如 &#34; -> "）
+function decodeHtmlEntities(text: string): string {
+  const textarea = document.createElement('textarea')
+  textarea.innerHTML = text
+  return textarea.value
+}
+
 // 显示的标题（根据已猜测的字符显示）
 const displayedTitle = computed(() => {
   if (!question.value) return ''
   
-  const title = question.value.title
+  // 解码 HTML 实体
+  const title = decodeHtmlEntities(question.value.title)
   
   // 如果已完成且有原始标题，显示完整内容（包括未猜测的字符）
   if (question.value.originalTitle && isCompleted.value) {
+    const originalTitle = decodeHtmlEntities(question.value.originalTitle)
     const guessedChars = new Set(
       guesses.value.filter(g => g.isInTitle).map(g => g.character)
     )
     
-    return question.value.originalTitle.split('').map(char => {
+    return originalTitle.split('').map(char => {
       // 标点符号直接显示
       if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
         return char
@@ -87,15 +96,17 @@ const displayedTitle = computed(() => {
 const displayedDescription = computed(() => {
   if (!question.value) return ''
   
-  const description = question.value.description
+  // 解码 HTML 实体
+  const description = decodeHtmlEntities(question.value.description)
   
   // 如果已完成且有原始描述，显示完整内容（包括未猜测的字符）
   if (question.value.originalDescription && isCompleted.value) {
+    const originalDescription = decodeHtmlEntities(question.value.originalDescription)
     const guessedChars = new Set(
       guesses.value.filter(g => g.isInContent).map(g => g.character)
     )
     
-    return question.value.originalDescription.split('').map(char => {
+    return originalDescription.split('').map(char => {
       // 标点符号直接显示
       if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
         return char
@@ -326,10 +337,10 @@ onMounted(() => {
               📅 今日题目
             </button>
             <button
-              @click="router.push('/')"
+              @click="router.push('/guess')"
               class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
             >
-              🏠 返回主页
+              🏠 返回猜词
             </button>
           </div>
         </div>
@@ -350,10 +361,10 @@ onMounted(() => {
                 🎯 进入今日题目
               </button>
               <button
-                @click="router.push('/')"
+                @click="router.push('/guess')"
                 class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
               >
-                🏠 返回主页
+                🏠 返回猜词
               </button>
             </div>
           </div>
