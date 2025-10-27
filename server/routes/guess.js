@@ -243,7 +243,7 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                     }
                 }
                 
-                return {
+                const responseData = {
                     success: true,
                     character: character,
                     isInTitle: isInTitle,
@@ -252,6 +252,17 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                     contentPositions: contentPositions,
                     isCompleted: isCompleted
                 };
+                
+                // 如果完成，返回完整题目信息
+                if (isCompleted) {
+                    responseData.question = {
+                        word: question.word,
+                        originalTitle: question.title,
+                        originalDescription: question.description
+                    };
+                }
+                
+                return responseData;
                 
             } catch (error) {
                 console.error('提交猜测失败:', error);

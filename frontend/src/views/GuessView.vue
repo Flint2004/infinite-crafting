@@ -38,20 +38,23 @@ const displayedTitle = computed(() => {
   
   const title = question.value.title
   
-  // 如果已完成且有原始标题，显示完整内容
-  if (question.value.originalTitle) {
+  // 如果已完成且有原始标题，显示完整内容（包括未猜测的字符）
+  if (question.value.originalTitle && isCompleted.value) {
     const guessedChars = new Set(
       guesses.value.filter(g => g.isInTitle).map(g => g.character)
     )
     
     return question.value.originalTitle.split('').map(char => {
+      // 标点符号直接显示
       if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
         return char
       }
+      // 已猜测的字符用绿色高亮
       if (guessedChars.has(char)) {
         return `<span class="bg-green-500 text-white px-1 mx-0.5 rounded">${char}</span>`
       }
-      return '<span class="text-gray-700">■</span>'
+      // 未猜测的字符显示原字符（完成后显示完整答案）
+      return `<span class="text-gray-700">${char}</span>`
     }).join('')
   }
   
@@ -84,20 +87,23 @@ const displayedDescription = computed(() => {
   
   const description = question.value.description
   
-  // 如果已完成且有原始描述，显示完整内容
-  if (question.value.originalDescription) {
+  // 如果已完成且有原始描述，显示完整内容（包括未猜测的字符）
+  if (question.value.originalDescription && isCompleted.value) {
     const guessedChars = new Set(
       guesses.value.filter(g => g.isInContent).map(g => g.character)
     )
     
     return question.value.originalDescription.split('').map(char => {
+      // 标点符号直接显示
       if (/[\u3000-\u303F\uFF00-\uFFEF]/.test(char)) {
         return char
       }
+      // 已猜测的字符用蓝色高亮
       if (guessedChars.has(char)) {
         return `<span class="bg-blue-500 text-white px-1 mx-0.5 rounded">${char}</span>`
       }
-      return '<span class="text-gray-400">■</span>'
+      // 未猜测的字符显示原字符（完成后显示完整答案）
+      return `<span class="text-gray-700">${char}</span>`
     }).join('')
   }
   
@@ -158,8 +164,8 @@ async function startGame() {
     
     leaderboard.value = response.data.leaderboard || []
     
-    // 检查是否已完成
-    checkCompletion()
+    // 使用后端返回的完成状态
+    isCompleted.value = response.data.isCompleted || false
     
   } catch (error: any) {
     const errorData = error.response?.data
@@ -207,6 +213,14 @@ async function submitGuess() {
     
     if (response.data.isCompleted) {
       isCompleted.value = true
+      
+      // 如果后端返回了完整题目信息，更新 question
+      if (response.data.question) {
+        question.value.word = response.data.question.word
+        question.value.originalTitle = response.data.question.originalTitle
+        question.value.originalDescription = response.data.question.originalDescription
+      }
+      
       // 重新加载排行榜
       await startGame()
     }
@@ -218,24 +232,6 @@ async function submitGuess() {
   }
 }
 
-// 检查是否完成
-function checkCompletion() {
-  if (!question.value) return
-  
-  // 如果有 originalTitle，说明已完成
-  if (question.value.originalTitle) {
-    const guessedChars = new Set(
-      guesses.value.filter(g => g.isInTitle).map(g => g.character)
-    )
-    const titleChars = new Set(
-      question.value.originalTitle.split('').filter((c: string) => /[\u4e00-\u9fff]/.test(c))
-    )
-    
-    isCompleted.value = Array.from(titleChars).every(c => guessedChars.has(c))
-  } else {
-    isCompleted.value = false
-  }
-}
 
 // 加载历史记录
 async function loadHistory() {
