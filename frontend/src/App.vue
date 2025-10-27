@@ -4,11 +4,15 @@ import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/useUserStore'
 import { useResourcesStore } from '@/stores/useResourcesStore'
 import { useBoxesStore } from '@/stores/useBoxesStore'
+import { useNotificationStore } from '@/stores/useNotificationStore'
+import { storeToRefs } from 'pinia'
 
 const router = useRouter()
 const userStore = useUserStore()
 const resourcesStore = useResourcesStore()
 const boxesStore = useBoxesStore()
+const notificationStore = useNotificationStore()
+const { message: toastMessage, show: showToast } = storeToRefs(notificationStore)
 
 const showUserMenu = ref(false)
 const showLogoutModal = ref(false)
@@ -340,6 +344,16 @@ async function copyToken() {
     </div>
   </div>
 
+  <!-- 浮窗提示 -->
+  <Transition name="toast">
+    <div
+        v-if="showToast"
+        class="fixed top-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm text-center"
+    >
+      {{ toastMessage }}
+    </div>
+  </Transition>
+
 </template>
 
 <style scoped>
@@ -383,5 +397,20 @@ async function copyToken() {
 
 .rainbow-border:hover {
   animation-duration: 1.5s;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translate(-50%, -20px);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -20px);
 }
 </style>

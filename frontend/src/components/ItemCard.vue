@@ -6,6 +6,7 @@ import {useBoxesStore} from "@/stores/useBoxesStore";
 import request from "@/utils/request";
 import {useResourcesStore} from "@/stores/useResourcesStore";
 import {useUserStore} from "@/stores/useUserStore";
+import {useNotificationStore} from "@/stores/useNotificationStore";
 import {storeToRefs} from "pinia";
 import {twMerge} from "tailwind-merge";
 import {ref} from "vue";
@@ -25,6 +26,7 @@ const {removeBox, addBox} = store
 const {resources} = storeToRefs(useResourcesStore())
 const {addResource} = useResourcesStore()
 const userStore = useUserStore()
+const notificationStore = useNotificationStore()
 
 // 双击显示详情
 const showDetails = ref(false)
@@ -163,14 +165,21 @@ const [, drop] = useDrop(() => ({
           }
           showErrorDialog('合成失败，请重试')
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('合成失败', error)
         // 恢复元素位置
         store.boxes[props.id].loading = false
         if (droppedBox) {
           addBox(droppedBox)
         }
-        showErrorDialog('合成失败，请重试')
+        if (error.response?.data?.error === '元素不存在') {
+          notificationStore.showNotification(
+              '元素不存在，合成配方已重置，请记录个人token后，点击右上角清除全部数据重新登陆',
+              5000
+          )
+        } else {
+          showErrorDialog('合成失败，请重试')
+        }
       }
     }
     
