@@ -164,7 +164,7 @@ async function copyToken() {
             </svg>
           </button>
           <div v-if="showUserMenu" @click="showUserMenu = false" class="fixed inset-0 z-30"></div>
-          <div v-if="showUserMenu" class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-40">
+          <div v-if="showUserMenu" class="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-40">
             <div class="p-3">
               <div class="text-xs text-gray-500 mb-1 select-none">您的Token</div>
               <div class="flex items-center space-x-2">
@@ -209,7 +209,7 @@ async function copyToken() {
             </svg>
           </button>
           <div v-if="showUserMenu" @click="showUserMenu = false" class="fixed inset-0 z-30"></div>
-          <div v-if="showUserMenu" class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-40">
+          <div v-if="showUserMenu" class="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-40">
             <div class="p-3">
               <div class="text-xs text-gray-500 mb-1 select-none">您的Token</div>
               <div class="flex items-center space-x-2">
