@@ -89,7 +89,7 @@ onMounted(() => {
           <p class="text-gray-600 text-lg">根据提示猜出百科词条的标题</p>
         </div>
         
-        <div class="flex justify-center gap-3 mb-6">
+        <div class="flex flex-wrap justify-center gap-3 mb-6">
           <button
             @click="loadHistory"
             :disabled="isLoading"
@@ -120,7 +120,7 @@ onMounted(() => {
 
       <!-- 今日题目 -->
       <div class="bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg shadow-lg p-8 mb-6 text-white">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
           <div>
             <h2 class="text-2xl font-bold mb-2">📅 今日题目</h2>
             <p class="text-purple-100">每天都有新的挑战等着你！</p>
@@ -137,7 +137,7 @@ onMounted(() => {
       <!-- 输入关键词 -->
       <div class="bg-white rounded-lg shadow-lg p-8 mb-6">
         <h2 class="text-2xl font-bold mb-4 text-gray-800">🔍 输入关键词或日期</h2>
-        <div class="flex gap-4 mb-4">
+        <div class="flex flex-col sm:flex-row gap-4 mb-4">
           <input
             v-model="seedString"
             @keydown="handleKeydown"

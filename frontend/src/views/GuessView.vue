@@ -420,7 +420,7 @@ onMounted(() => {
               <span class="text-xs text-green-600">🟢 绿色 = 标题中的字</span>
             </div>
             <div 
-              class="text-2xl font-bold leading-relaxed"
+              class="text-2xl font-bold leading-relaxed break-all"
               v-html="displayedTitle"
             ></div>
           </div>
@@ -431,7 +431,7 @@ onMounted(() => {
               <span class="text-xs text-blue-600">🔵 蓝色 = 内容中的字</span>
             </div>
             <div 
-              class="text-base leading-relaxed text-gray-700"
+              class="text-base leading-relaxed text-gray-700 break-all"
               v-html="displayedDescription"
             ></div>
           </div>

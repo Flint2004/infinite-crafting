@@ -109,7 +109,7 @@ async function copyToken() {
 
 <template>
   <header v-if="userStore.isLoggedIn()" class="border-b border-gray-300 py-4 px-4 fixed z-20 w-full bg-white shadow-sm">
-    <div class="flex w-full px-4 mx-auto justify-between items-center">
+    <div class="flex w-full px-4 mx-auto justify-between items-center flex-wrap">
       <div class="flex items-center space-x-4">
         <div class="relative inline-block">
           <a 
@@ -185,7 +185,6 @@ async function copyToken() {
         </div>
       </div>
       <nav class="flex space-x-5 items-center">
-        <RouterLink class="text-gray-500 transition hover:text-gray-600 font-semibold" to="/">游戏</RouterLink>
         <RouterLink class="text-gray-500 transition hover:text-gray-600 font-semibold" to="/about">关于</RouterLink>
         <button 
           @click="showLogoutDialog"
