@@ -145,29 +145,13 @@ async function fetchMinecraftWikiContent(db) {
     
     for (let i = 0; i < maxRetries; i++) {
         try {
-            // 添加延迟，避免触发反爬机制
-            if (i > 0) {
-                await new Promise(resolve => setTimeout(resolve, 2000)); // 等待2秒
-            }
-            
             // 访问随机页面，允许重定向
             const response = await axios.get('https://zh.minecraft.wiki/Special:%E9%9A%8F%E6%9C%BA%E9%A1%B5%E9%9D%A2/Minecraft', {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-                    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-                    'Accept-Encoding': 'gzip, deflate, br',
-                    'Referer': 'https://zh.minecraft.wiki/',
-                    'Connection': 'keep-alive',
-                    'Upgrade-Insecure-Requests': '1',
-                    'Sec-Fetch-Dest': 'document',
-                    'Sec-Fetch-Mode': 'navigate',
-                    'Sec-Fetch-Site': 'same-origin',
-                    'Cache-Control': 'max-age=0'
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 },
                 maxRedirects: 10,
-                validateStatus: (status) => status >= 200 && status < 400,
-                timeout: 10000
+                validateStatus: (status) => status >= 200 && status < 400
             });
             
             const html = response.data;
@@ -222,22 +206,11 @@ async function fetchMinecraftWikiContent(db) {
             };
             
         } catch (error) {
-            const statusCode = error.response?.status;
-            if (statusCode === 403) {
-                console.error(`⚠️  Minecraft Wiki 返回 403 (访问被拒绝) - 尝试 ${i + 1}/${maxRetries}`);
-                // 403 错误，增加等待时间
-                if (i < maxRetries - 1) {
-                    const waitTime = 3000 * (i + 1); // 递增等待时间
-                    console.log(`等待 ${waitTime/1000} 秒后重试...`);
-                    await new Promise(resolve => setTimeout(resolve, waitTime));
-                }
-            } else {
-                console.error(`获取 Minecraft Wiki 失败 (尝试 ${i + 1}/${maxRetries}):`, error.message);
-            }
+            console.error(`获取 Minecraft Wiki 失败 (尝试 ${i + 1}/${maxRetries}):`, error.message);
         }
     }
     
-    throw new Error('无法从 Minecraft Wiki 获取合适的页面（可能被反爬虫机制拦截）');
+    throw new Error('无法从 Minecraft Wiki 获取合适的页面');
 }
 
 /**
