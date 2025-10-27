@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {RouterLink, RouterView, useRouter} from 'vue-router'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/useUserStore'
 import { useResourcesStore } from '@/stores/useResourcesStore'
 import { useBoxesStore } from '@/stores/useBoxesStore'
@@ -12,6 +12,9 @@ const boxesStore = useBoxesStore()
 
 const showUserMenu = ref(false)
 const showLogoutModal = ref(false)
+
+// SZUCraft 点击状态
+const hasClickedSZUCraft = ref(false)
 
 function showLogoutDialog() {
   showUserMenu.value = false
@@ -53,6 +56,18 @@ function logoutAndClearAll() {
 function cancelLogout() {
   showLogoutModal.value = false
 }
+
+// 处理 SZUCraft 点击
+function handleSZUCraftClick() {
+  hasClickedSZUCraft.value = true
+  localStorage.setItem('szucraft_clicked', 'true')
+}
+
+onMounted(() => {
+  // 检查是否点击过 SZUCraft
+  const clicked = localStorage.getItem('szucraft_clicked')
+  hasClickedSZUCraft.value = clicked === 'true'
+})
 
 async function copyToken() {
   if (userStore.user?.token) {
@@ -100,7 +115,11 @@ async function copyToken() {
           href="https://www.szucraft.cn" 
           target="_blank"
           rel="noopener noreferrer"
-          class="border-2 border-gray-200 shadow-sm px-2.5 rounded-lg py-1 text-xl font-semibold select-none cursor-pointer hover:border-gray-300 transition"
+          @click="handleSZUCraftClick"
+          :class="[
+            'border-2 shadow-sm px-2.5 rounded-lg py-1 text-xl font-semibold select-none cursor-pointer transition',
+            hasClickedSZUCraft ? 'border-gray-200 hover:border-gray-300' : 'rainbow-border'
+          ]"
         >
           <span class="text-red-500">SZU</span><span class="text-gray-400">Craft</span>
         </a>
@@ -268,5 +287,45 @@ async function copyToken() {
 </template>
 
 <style scoped>
+/* 彩虹色动效描边 */
+.rainbow-border {
+  position: relative;
+  border-color: transparent;
+  animation: rainbow-border 3s linear infinite;
+}
 
+@keyframes rainbow-border {
+  0% {
+    border-color: #ff0000;
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+  }
+  16.66% {
+    border-color: #ff7f00;
+    box-shadow: 0 0 8px rgba(255, 127, 0, 0.6);
+  }
+  33.33% {
+    border-color: #ffff00;
+    box-shadow: 0 0 8px rgba(255, 255, 0, 0.6);
+  }
+  50% {
+    border-color: #00ff00;
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
+  }
+  66.66% {
+    border-color: #0000ff;
+    box-shadow: 0 0 8px rgba(0, 0, 255, 0.6);
+  }
+  83.33% {
+    border-color: #8b00ff;
+    box-shadow: 0 0 8px rgba(139, 0, 255, 0.6);
+  }
+  100% {
+    border-color: #ff0000;
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+  }
+}
+
+.rainbow-border:hover {
+  animation-duration: 1.5s;
+}
 </style>
