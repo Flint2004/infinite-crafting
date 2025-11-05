@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import GuessIndexView from '../views/GuessIndexView.vue'
 import GuessView from '../views/GuessView.vue'
+import CreateQuestionView from '../views/CreateQuestionView.vue'
 import { useUserStore } from '@/stores/useUserStore'
 
 const router = createRouter({
@@ -42,6 +43,15 @@ const router = createRouter({
       meta: { 
         requiresAuth: true,
         title: '猜百科'
+      }
+    },
+    {
+      path: '/create-question',
+      name: 'create-question',
+      component: CreateQuestionView,
+      meta: { 
+        requiresAuth: true,
+        title: '创建题目'
       }
     },
     {

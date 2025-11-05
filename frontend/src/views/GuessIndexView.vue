@@ -15,6 +15,7 @@ const history = ref<Array<any>>([])
 const showHistory = ref(false)
 const allSeeds = ref<Array<any>>([])
 const showAllSeeds = ref(false)
+const hasCreatorPermission = ref(false)
 
 // 获取今日日期字符串
 function getTodayString(): string {
@@ -74,8 +75,19 @@ function handleKeydown(event: KeyboardEvent) {
   }
 }
 
+// 检查出题权限
+async function checkCreatorPermission() {
+  try {
+    const response = await request.get('/creator/status')
+    hasCreatorPermission.value = response.data.hasPermission
+  } catch (error) {
+    hasCreatorPermission.value = false
+  }
+}
+
 onMounted(() => {
   console.log('GuessIndexView mounted, user:', userStore.user)
+  checkCreatorPermission()
 })
 </script>
 
@@ -103,6 +115,13 @@ onMounted(() => {
             class="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition disabled:opacity-50"
           >
             📚 所有题目
+          </button>
+          <button
+            v-if="hasCreatorPermission"
+            @click="router.push('/create-question')"
+            class="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+          >
+            📝 创建题目
           </button>
           <button
             @click="router.push('/')"

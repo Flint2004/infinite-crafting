@@ -646,5 +646,334 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
             }
         }
     });
+    
+    // ========== 授权管理接口 ==========
+    
+    // 管理接口：授予用户出题权限
+    fastify.route({
+        method: 'POST',
+        url: '/admin/grant-creator',
+        handler: async (request, reply) => {
+            const ADMIN_KEY = process.env.ADMIN_KEY || '';
+            const adminKey = request.headers.authorization?.replace('Bearer ', '');
+
+            if (!ADMIN_KEY || adminKey !== ADMIN_KEY) {
+                return reply.code(401).send({ error: '未经授权' });
+            }
+
+            const { username } = request.body;
+            
+            if (!username || username.trim().length === 0) {
+                return reply.code(400).send({ error: '请提供用户名' });
+            }
+            
+            try {
+                // 查找用户
+                const user = await db.get('SELECT * FROM users WHERE username = ?', [username]);
+                
+                if (!user) {
+                    return reply.code(404).send({ error: '用户不存在' });
+                }
+                
+                // 检查是否已经有权限
+                const existing = await db.get('SELECT * FROM question_creators WHERE user_id = ?', [user.id]);
+                
+                if (existing) {
+                    return reply.code(400).send({ error: '该用户已经拥有出题权限' });
+                }
+                
+                // 授予权限
+                await db.run(
+                    'INSERT INTO question_creators (user_id, granted_by) VALUES (?, ?)',
+                    [user.id, 'admin']
+                );
+                
+                console.log(`✅ [管理员] 授予用户 "${username}" 出题权限`);
+                
+                return {
+                    success: true,
+                    message: `已授予用户 "${username}" 出题权限`
+                };
+                
+            } catch (error) {
+                console.error('❌ [管理员] 授予权限失败:', error);
+                return reply.code(500).send({ 
+                    error: '授予权限失败', 
+                    details: error.message 
+                });
+            }
+        }
+    });
+    
+    // 管理接口：撤销用户出题权限
+    fastify.route({
+        method: 'POST',
+        url: '/admin/revoke-creator',
+        handler: async (request, reply) => {
+            const ADMIN_KEY = process.env.ADMIN_KEY || '';
+            const adminKey = request.headers.authorization?.replace('Bearer ', '');
+
+            if (!ADMIN_KEY || adminKey !== ADMIN_KEY) {
+                return reply.code(401).send({ error: '未经授权' });
+            }
+
+            const { username } = request.body;
+            
+            if (!username || username.trim().length === 0) {
+                return reply.code(400).send({ error: '请提供用户名' });
+            }
+            
+            try {
+                // 查找用户
+                const user = await db.get('SELECT * FROM users WHERE username = ?', [username]);
+                
+                if (!user) {
+                    return reply.code(404).send({ error: '用户不存在' });
+                }
+                
+                // 删除权限
+                const result = await db.run('DELETE FROM question_creators WHERE user_id = ?', [user.id]);
+                
+                if (result.changes === 0) {
+                    return reply.code(400).send({ error: '该用户没有出题权限' });
+                }
+                
+                console.log(`✅ [管理员] 撤销用户 "${username}" 的出题权限`);
+                
+                return {
+                    success: true,
+                    message: `已撤销用户 "${username}" 的出题权限`
+                };
+                
+            } catch (error) {
+                console.error('❌ [管理员] 撤销权限失败:', error);
+                return reply.code(500).send({ 
+                    error: '撤销权限失败', 
+                    details: error.message 
+                });
+            }
+        }
+    });
+    
+    // 管理接口：获取所有有权限的用户
+    fastify.route({
+        method: 'GET',
+        url: '/admin/creators',
+        handler: async (request, reply) => {
+            const ADMIN_KEY = process.env.ADMIN_KEY || '';
+            const adminKey = request.headers.authorization?.replace('Bearer ', '');
+
+            if (!ADMIN_KEY || adminKey !== ADMIN_KEY) {
+                return reply.code(401).send({ error: '未经授权' });
+            }
+            
+            try {
+                const creators = await db.all(
+                    `SELECT u.username, qc.granted_by, qc.granted_at
+                     FROM question_creators qc
+                     JOIN users u ON qc.user_id = u.id
+                     ORDER BY qc.granted_at DESC`
+                );
+                
+                return {
+                    success: true,
+                    count: creators.length,
+                    creators: creators
+                };
+                
+            } catch (error) {
+                console.error('❌ [管理员] 获取授权用户列表失败:', error);
+                return reply.code(500).send({ 
+                    error: '获取授权用户列表失败', 
+                    details: error.message 
+                });
+            }
+        }
+    });
+    
+    // 用户接口：检查自己的出题权限
+    fastify.route({
+        method: 'GET',
+        url: '/creator/status',
+        handler: async (request, reply) => {
+            const user = await authenticateUser(request, reply);
+            if (!user) return;
+            
+            try {
+                const creator = await db.get('SELECT * FROM question_creators WHERE user_id = ?', [user.id]);
+                
+                return {
+                    hasPermission: !!creator,
+                    grantedAt: creator ? creator.granted_at : null
+                };
+                
+            } catch (error) {
+                console.error('检查权限失败:', error);
+                return reply.code(500).send({ 
+                    error: '检查权限失败', 
+                    details: error.message 
+                });
+            }
+        }
+    });
+    
+    // ========== 用户出题接口 ==========
+    
+    // 用户接口：提交普通题目
+    fastify.route({
+        method: 'POST',
+        url: '/creator/submit-question',
+        handler: async (request, reply) => {
+            const user = await authenticateUser(request, reply);
+            if (!user) return;
+            
+            // 检查权限
+            const creator = await db.get('SELECT * FROM question_creators WHERE user_id = ?', [user.id]);
+            if (!creator) {
+                return reply.code(403).send({ error: '您没有出题权限' });
+            }
+            
+            const { seedString, title, description } = request.body;
+            
+            // 验证输入
+            if (!seedString || !title || !description) {
+                return reply.code(400).send({ error: '请提供完整的题目信息（种子字符串、标题、描述）' });
+            }
+            
+            if (seedString.trim().length === 0 || title.trim().length === 0 || description.trim().length === 0) {
+                return reply.code(400).send({ error: '题目信息不能为空' });
+            }
+            
+            // 限制种子字符串格式
+            if (seedString.startsWith('mc-')) {
+                return reply.code(400).send({ error: 'mc- 前缀保留给 Minecraft 题目，请使用普通种子字符串' });
+            }
+            
+            if (!/^[a-zA-Z0-9\-_]+$/.test(seedString)) {
+                return reply.code(400).send({ error: '种子字符串只能包含字母、数字、连字符和下划线' });
+            }
+            
+            try {
+                // 检查种子是否已存在
+                const existing = await db.get('SELECT * FROM guess_questions WHERE seed_string = ?', [seedString]);
+                
+                if (existing) {
+                    return reply.code(400).send({ error: '该种子字符串已被使用' });
+                }
+                
+                // 提取标题中的关键词作为答案
+                const word = title;
+                
+                // 存入数据库
+                await db.run(
+                    `INSERT INTO guess_questions (seed_string, word, title, description, created_at) 
+                     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+                    [seedString, word, title, description]
+                );
+                
+                const question = await db.get('SELECT * FROM guess_questions WHERE seed_string = ?', [seedString]);
+                
+                console.log(`✅ [用户出题] ${user.username} 创建了题目: ${seedString} -> ${word}`);
+                
+                return {
+                    success: true,
+                    message: '题目创建成功',
+                    question: {
+                        id: question.id,
+                        seedString: question.seed_string,
+                        word: question.word,
+                        title: question.title,
+                        description: question.description
+                    }
+                };
+                
+            } catch (error) {
+                console.error('创建题目失败:', error);
+                return reply.code(500).send({ 
+                    error: '创建题目失败', 
+                    details: error.message 
+                });
+            }
+        }
+    });
+    
+    // 用户接口：提交 Minecraft 题目
+    fastify.route({
+        method: 'POST',
+        url: '/creator/submit-mc-question',
+        handler: async (request, reply) => {
+            const user = await authenticateUser(request, reply);
+            if (!user) return;
+            
+            // 检查权限
+            const creator = await db.get('SELECT * FROM question_creators WHERE user_id = ?', [user.id]);
+            if (!creator) {
+                return reply.code(403).send({ error: '您没有出题权限' });
+            }
+            
+            const { seedString, itemName, title, description } = request.body;
+            
+            // 验证输入
+            if (!seedString || !itemName || !title || !description) {
+                return reply.code(400).send({ error: '请提供完整的题目信息（种子字符串、物品名、标题、描述）' });
+            }
+            
+            if (seedString.trim().length === 0 || itemName.trim().length === 0 || 
+                title.trim().length === 0 || description.trim().length === 0) {
+                return reply.code(400).send({ error: '题目信息不能为空' });
+            }
+            
+            // MC 题目必须以 mc- 开头
+            if (!seedString.startsWith('mc-')) {
+                return reply.code(400).send({ error: 'Minecraft 题目的种子字符串必须以 mc- 开头' });
+            }
+            
+            if (!/^mc-[a-zA-Z0-9\-_]+$/.test(seedString)) {
+                return reply.code(400).send({ error: '种子字符串格式错误，应为 mc- 加字母、数字、连字符或下划线' });
+            }
+            
+            try {
+                // 检查种子是否已存在
+                const existing = await db.get('SELECT * FROM guess_questions WHERE seed_string = ?', [seedString]);
+                
+                if (existing) {
+                    return reply.code(400).send({ error: '该种子字符串已被使用' });
+                }
+                
+                // 使用物品名作为答案
+                const word = itemName;
+                
+                // 存入数据库
+                await db.run(
+                    `INSERT INTO guess_questions (seed_string, word, title, description, created_at) 
+                     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+                    [seedString, word, title, description]
+                );
+                
+                const question = await db.get('SELECT * FROM guess_questions WHERE seed_string = ?', [seedString]);
+                
+                console.log(`✅ [用户出题-MC] ${user.username} 创建了 Minecraft 题目: ${seedString} -> ${word}`);
+                
+                return {
+                    success: true,
+                    message: 'Minecraft 题目创建成功',
+                    question: {
+                        id: question.id,
+                        seedString: question.seed_string,
+                        word: question.word,
+                        title: question.title,
+                        description: question.description
+                    }
+                };
+                
+            } catch (error) {
+                console.error('创建 Minecraft 题目失败:', error);
+                return reply.code(500).send({ 
+                    error: '创建题目失败', 
+                    details: error.message 
+                });
+            }
+        }
+    });
 }
 

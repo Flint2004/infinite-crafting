@@ -184,6 +184,17 @@ async function initializeDatabase() {
         )
     `);
     
+    // 用户出题授权表
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS question_creators (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE NOT NULL,
+            granted_by TEXT,
+            granted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `);
+    
     // 初始化基础五行元素 -  现在由 loadPresets 处理
 }
 
