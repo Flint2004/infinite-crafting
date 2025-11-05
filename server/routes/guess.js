@@ -95,9 +95,9 @@ export function registerGuessRoutes(fastify, { db, authenticateUser, aiConfig })
                     created_at: g.created_at
                 }));
                 
-                // 遮挡内容：除标点符号外全部替换为 ■（包括中文引号 \u2018-\u201F）
-                const maskedTitle = question.title.replace(/[^\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F]/g, '■');
-                const maskedDescription = question.description.replace(/[^\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F]/g, '■');
+                // 遮挡内容：除标点符号、英文冒号、空格、连字符、下划线外全部替换为 ■（包括中文引号 \u2018-\u201F）
+                const maskedTitle = question.title.replace(/[^\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F: \-_]/g, '■');
+                const maskedDescription = question.description.replace(/[^\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F: \-_]/g, '■');
                 
                 // 检查用户是否已完成该题目
                 const userCompleted = await db.get(

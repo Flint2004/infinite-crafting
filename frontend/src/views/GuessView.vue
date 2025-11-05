@@ -69,8 +69,8 @@ const displayedTitle = computed(() => {
     )
     
     return originalTitle.split('').map(char => {
-      // 标点符号直接显示（包括中文引号 ""''）
-      if (/[\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F]/.test(char)) {
+      // 标点符号、英文冒号、空格、连字符、下划线直接显示（包括中文引号 ""''）
+      if (/[\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F: \-_]/.test(char)) {
         return char
       }
       // 已猜测的字符用绿色高亮
@@ -95,7 +95,7 @@ const displayedTitle = computed(() => {
   })
   
   return chars.map((char, index) => {
-    if (/[\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F]/.test(char)) {
+    if (/[\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F: \-_]/.test(char)) {
       return char
     }
     if (positionMap.has(index)) {
@@ -120,8 +120,8 @@ const displayedDescription = computed(() => {
     )
     
     return originalDescription.split('').map(char => {
-      // 标点符号直接显示（包括中文引号 ""''）
-      if (/[\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F]/.test(char)) {
+      // 标点符号、英文冒号、空格、连字符、下划线直接显示（包括中文引号 ""''）
+      if (/[\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F: \-_]/.test(char)) {
         return char
       }
       // 已猜测的字符用蓝色高亮
@@ -146,7 +146,7 @@ const displayedDescription = computed(() => {
   })
   
   return chars.map((char, index) => {
-    if (/[\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F]/.test(char)) {
+    if (/[\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F: \-_]/.test(char)) {
       return char
     }
     if (positionMap.has(index)) {
